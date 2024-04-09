@@ -38,13 +38,13 @@ def preprocess_func() -> List[PreprocessResponse]:
 
 def convert(video):
     # Converting files from AAC to WAV
-    for fname in tqdm(video):
-        outfile = fname.replace('.m4a', '.wav')
-        out = subprocess.call(
-            ['ffmpeg', '-y', '-i', fname, '-ac', '1', '-vn', '-acodec', 'pcm_s16le', '-ar', '16000', outfile],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    return out
+    # for fname in tqdm(video):
+    outfile = video.replace('.m4a', '.wav')
+    out = subprocess.call(
+        'ffmpeg -y -i %s -ac 1 -vn -acodec pcm_s16le -ar 16000 %s >/dev/null 2>/dev/null' % (video, outfile),
+        shell=True)
+    if out != 0:
+        raise ValueError('Conversion failed %s.' % video)
 
 
 def input_encoder_image(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
@@ -62,7 +62,8 @@ def input_encoder_image(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
     # vid_path = preprocess.data['videos'][idx]
     # fpath = download(str(vid_path), CONFIG['BUCKET_NAME'])
 def input_encoder_video(idx, preprocess) -> np.ndarray:
-    fpath = '/Users/chenrothschild/Downloads/vox2_dev_mp4_partaa.m4a'
+    fpath = '/Users/chenrothschild/Downloads/vox2_dev_mp4_partab'
+    # convert_video = convert(fpath)
     vid_dict = read_video(fpath, pts_unit='sec')
     vid = vid_dict[0].permute(0, 3, 1, 2)
     if vid.shape[2] != 256:
