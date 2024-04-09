@@ -87,3 +87,6 @@ leap_binder.set_input(function=input_encoder_video, name='video')
 
 leap_binder.set_ground_truth(function=gt_encoder, name='classes')
 # leap_binder.add_prediction(name='classes', labels=LABELS)
+
+if __name__ == '__main__':
+    leap_binder.check()
