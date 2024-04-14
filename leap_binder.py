@@ -1,5 +1,4 @@
-from typing import List
-
+from typing import List, Dict, Union
 import numpy as np
 import torch
 from typing import Tuple
@@ -23,70 +22,182 @@ from code_loader.contract.enums import Metric, DatasetMetadataType
 from code_loader.contract.visualizer_classes import LeapHorizontalBar
 
 from casablanca.data.preprocess import load_data
-from casablanca.utils.gcs_utils import download
+from casablanca.utils.gcs_utils import _download
 
 
 # Preprocess Function
 def preprocess_func() -> List[PreprocessResponse]:
-    train_videos = load_data()
-    train_size = min(len(train_videos), CONFIG['train_size'])
+    # train_videos = load_data('dev')
+    # train_size = CONFIG['train_size']
 
-    train = PreprocessResponse(length=train_size, data={'videos': train_videos})
-    response = [train]
+    test_videos = load_data('test')
+    test_size = min(CONFIG['test_size'], len(test_videos))
+
+    # train = PreprocessResponse(length=train_size, data={'videos': train_videos})
+    test = PreprocessResponse(length=test_size, data={'videos': test_videos})
+    # response = [train, test]
+    response = [test]
     return response
 
 
-def convert(video):
-    # Converting files from AAC to WAV
-    # for fname in tqdm(video):
-    outfile = video.replace('.m4a', '.wav')
-    out = subprocess.call(
-        'ffmpeg -y -i %s -ac 1 -vn -acodec pcm_s16le -ar 16000 %s >/dev/null 2>/dev/null' % (video, outfile),
-        shell=True)
-    if out != 0:
-        raise ValueError('Conversion failed %s.' % video)
-
-
-def input_encoder_image(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
-    filename = preprocess.data['samples'][idx]['file_name']
-    img = Image.open(filename).convert('RGB')
-    img = img.resize((256, 256))
-    img = np.asarray(img)
-    img = np.transpose(img, (2, 0, 1)) / 255.0
-    img = (img - 0.5) * 2.0
-    img = img[np.newaxis, ...]
-    return torch.tensor(img, dtype=torch.float32)
+# def input_encoder_source_image(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
+#     filename = preprocess.data['videos'][idx]
+#     img = Image.open(filename).convert('RGB')
+#     img = img.resize((256, 256))
+#     img = np.asarray(img)
+#     img = np.transpose(img, (2, 0, 1)) / 255.0
+#     img = (img - 0.5) * 2.0
+#     img = img[np.newaxis, ...]
+#     return torch.tensor(img, dtype=torch.float32)
 
 
 # def input_encoder_video(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
-    # vid_path = preprocess.data['videos'][idx]
-    # fpath = download(str(vid_path), CONFIG['BUCKET_NAME'])
-def input_encoder_video(idx, preprocess) -> np.ndarray:
-    fpath = '/Users/chenrothschild/Downloads/vox2_dev_mp4_partab'
-    # convert_video = convert(fpath)
+# vid_path = preprocess.data['videos'][idx]
+# fpath = download(str(vid_path), CONFIG['BUCKET_NAME'])
+def input_encoder_video(idx: int, preprocess: PreprocessResponse, frame_number) -> np.ndarray:
+    filename = preprocess.data['videos'][idx]
+    fpath = _download(str(filename))
     vid_dict = read_video(fpath, pts_unit='sec')
     vid = vid_dict[0].permute(0, 3, 1, 2)
     if vid.shape[2] != 256:
         vid = nn.functional.interpolate(vid, size=(256, 256), mode='bilinear', align_corners=False)
     vid = vid.unsqueeze(0)
     vid_norm = (vid / 255.0 - 0.5) * 2.0
+    vid_norm = vid_norm[0]
 
-    return vid_norm, vid_dict[2]['video_fps']
+    return vid_norm[frame_number]
 
 
-# Ground truth encoder fetches the label with the index `idx` from the `labels` array set in
-# the PreprocessResponse's data. Returns a numpy array containing a hot vector label correlated with the sample.
-def gt_encoder(idx: int, preprocessing: PreprocessResponse) -> np.ndarray:
-    return preprocessing.data['labels'][idx].astype('float32')
+def input_encoder_source_image(idx: int, preprocess: PreprocessResponse):
+    frame_number = 0
+    frame = input_encoder_video(idx, preprocess, frame_number)
+    return frame
+
+
+def input_encoder_current_frame(idx: int, preprocess: PreprocessResponse):
+    frame_number = 0
+    frame = input_encoder_video(idx, preprocess, frame_number)
+    return frame
+
+
+def input_encoder_first_frame(idx: int, preprocess: PreprocessResponse):
+    frame_number = 0
+    frame = input_encoder_video(idx, preprocess, frame_number)
+    return frame
+
+
+def get_idx(idx: int, preprocess: PreprocessResponse) -> int:
+    return idx
+
+
+def get_fname(idx: int, preprocess: PreprocessResponse) -> str:
+    return preprocess.data['videos'][idx]
+
+
+def get_folder_name(idx: int, preprocess: PreprocessResponse) -> str:
+    path = preprocess.data['videos'][idx]
+    return path.split('/')[-3] + '/' + path.split('/')[-2]
+
+
+def get_original_width(video) -> int:
+    return int(video.shape[2])
+
+
+def get_original_height(video) -> int:
+    return int(video.shape[3])
+
+
+def source_image_brightness(frame) -> float:
+    return float(np.mean(frame))
+
+
+def source_image_color_brightness_mean(idx: int, preprocess: PreprocessResponse) -> dict:
+    frame = (input_encoder_source_image(idx, preprocess)).numpy().astype(np.float32)
+    frame = np.transpose(frame, (1, 2, 0))
+    b, g, r = cv2.split(frame)
+    res = {"red": float(r.mean()), "green": float(g.mean()), "blue": float(b.mean())}
+
+    return res
+
+
+def source_image_color_brightness_std(idx: int, preprocess: PreprocessResponse) -> dict:
+    frame = (input_encoder_source_image(idx, preprocess)).numpy().astype(np.float32)
+    frame = np.transpose(frame, (1, 2, 0))
+    b, g, r = cv2.split(frame)
+    res = {"red": float(r.std()), "green": float(g.std()), "blue": float(b.std())}
+
+    return res
+
+
+def source_image_contrast(frame) -> float:
+    img_lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(img_lab)
+    df = abs(a - b)
+
+    return float(np.mean(df))
+
+
+def source_image_hsv(idx: int, preprocess: PreprocessResponse) -> Dict[str, float]:
+    frame = (input_encoder_source_image(idx, preprocess)).numpy().astype(np.float32)
+    frame = np.transpose(frame, (1, 2, 0))
+    hsv_image = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
+    hue_range = np.ptp(hsv_image[:, :, 0])  #
+    saturation_level = np.mean(hsv_image[:, :, 1])
+
+    res = {'hue_range': float(hue_range), 'saturation_level': float(saturation_level)}
+
+    return res
+
+
+def source_image_lab(idx: int, preprocess: PreprocessResponse) -> Dict[str, float]:
+    frame = (input_encoder_source_image(idx, preprocess)).numpy().astype(np.float32)
+    frame = np.transpose(frame, (1, 2, 0))
+    lab_image = cv2.cvtColor(frame, cv2.COLOR_RGB2LAB)
+    lightness_mean = np.mean(lab_image[:, :, 0])
+    a_mean = np.mean(lab_image[:, :, 1])
+    b_mean = np.mean(lab_image[:, :, 2])
+    res = {'lightness_mean': float(lightness_mean), 'a_mean': float(a_mean), 'b_mean': float(b_mean)}
+
+    return res
+
+
+def get_video(idx: int, preprocess: PreprocessResponse):
+    filename = preprocess.data['videos'][idx]
+    fpath = _download(str(filename))
+    vid_dict = read_video(fpath, pts_unit='sec')
+    video = vid_dict[0].permute(0, 3, 1, 2)
+    return video
+
+
+def metadata_dict(idx: int, preprocess: PreprocessResponse) -> Dict[str, Union[float, int, str]]:
+    frame = (input_encoder_source_image(idx, preprocess)).numpy().astype(np.float32)
+    frame = np.transpose(frame, (1, 2, 0))
+    video = get_video(idx, preprocess)
+
+    metadata = {
+        'source_image_brightness': source_image_brightness(frame),
+        'source_image_contrast': source_image_contrast(frame),
+        'get_original_width': get_original_width(video),
+        'get_original_height': get_original_height(video)
+
+    }
+
+    return metadata
 
 
 # Dataset binding functions to bind the functions above to the `Dataset Instance`.
 leap_binder.set_preprocess(function=preprocess_func)
-leap_binder.set_input(function=input_encoder_image, name='image')
-leap_binder.set_input(function=input_encoder_video, name='video')
-
-leap_binder.set_ground_truth(function=gt_encoder, name='classes')
-# leap_binder.add_prediction(name='classes', labels=LABELS)
+leap_binder.set_input(function=input_encoder_source_image, name='source_image')
+leap_binder.set_input(function=input_encoder_current_frame, name='current_frame')
+leap_binder.set_input(function=input_encoder_first_frame, name='first_frame')
+leap_binder.set_metadata(get_idx, name='idx')
+leap_binder.set_metadata(get_fname, name='file_name')
+leap_binder.set_metadata(get_folder_name, name='folder_name')
+leap_binder.set_metadata(metadata_dict, name='')
+leap_binder.set_metadata(source_image_color_brightness_mean, name='source_image_color_brightness_mean')
+leap_binder.set_metadata(source_image_color_brightness_std, name='source_image_color_brightness_std')
+leap_binder.set_metadata(source_image_hsv, name='source_image_hsv')
+leap_binder.set_metadata(source_image_lab, name='source_image_lab')
 
 if __name__ == '__main__':
     leap_binder.check()

@@ -1,2 +1,5 @@
 PROJECT_ID: 'casablanca-dev-project'
 BUCKET_NAME: 'casablanca-datasets'
+
+test_size: 1000
+train_size: 1000
