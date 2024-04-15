@@ -15,13 +15,13 @@ def check_custom_test():
     print("started custom tests")
 
     dir_path = os.path.dirname(os.path.abspath(__file__))
-    model_path = 'model/model.onnx'
-    # sess = onnxruntime.InferenceSession(os.path.join(dir_path, model_path))
+    model_path = 'model/lia_encoder_decoder.onnx'
+    sess = onnxruntime.InferenceSession(os.path.join(dir_path, model_path))
 
-    # input_name_1 = sess.get_inputs()[0].name
-    # input_name_2 = sess.get_inputs()[1].name
-    # input_name_3 = sess.get_inputs()[2].name
-    # output_name = sess.get_outputs()[-1].name
+    input_name_1 = sess.get_inputs()[0].name
+    input_name_2 = sess.get_inputs()[1].name
+    input_name_3 = sess.get_inputs()[2].name
+    output_name = sess.get_outputs()[-1].name
 
     subsets = preprocess_func()
     responses_set = subsets[0]
@@ -34,9 +34,9 @@ def check_custom_test():
         current_frame = input_encoder_current_frame(idx, responses_set)
         first_frame = input_encoder_first_frame(idx, responses_set)
 
-        # pred = sess.run([output_name], {input_name_1: np.moveaxis(source_image.astype(np.float32), [1, 2, 3], [2, 3, 1]),
-        #                                input_name_2: np.moveaxis(current_frame.astype(np.float32), [1, 2, 3], [2, 3, 1]),
-        #                                 input_name_3: np.moveaxis(first_frame.astype(np.float32), [1, 2, 3], [2, 3, 1])})[0]
+        pred = sess.run([output_name], {input_name_1: np.moveaxis(source_image.astype(np.float32), [1, 2, 3], [2, 3, 1]),
+                                       input_name_2: np.moveaxis(current_frame.astype(np.float32), [1, 2, 3], [2, 3, 1]),
+                                        input_name_3: np.moveaxis(first_frame.astype(np.float32), [1, 2, 3], [2, 3, 1])})[0]
 
         metadata = metadata_dict(idx, responses_set)
         idx_ = get_idx(idx, responses_set)

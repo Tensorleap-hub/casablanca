@@ -9,3 +9,4 @@ include:
     - casablanca/config.yaml
     - casablanca/utils/*.py
     - casablanca/data/*.py
+    - casablanca/losses.py
