@@ -2,6 +2,7 @@ from typing import List, Dict, Union
 
 import cv2
 import numpy as np
+import torch
 import torch.nn as nn
 from torchvision.io import read_video
 from casablanca.config import CONFIG
