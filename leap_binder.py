@@ -7,13 +7,12 @@ import torch.nn as nn
 from torchvision.io import read_video
 from casablanca.config import CONFIG
 
-
 # Tensorleap imports
 from code_loader import leap_binder
 from code_loader.contract.datasetclasses import PreprocessResponse
 
-
 from casablanca.data.preprocess import load_data
+from casablanca.losses import zero_loss
 from casablanca.utils.gcs_utils import _download
 
 
@@ -180,9 +179,11 @@ def metadata_dict(idx: int, preprocess: PreprocessResponse) -> Dict[str, Union[f
 
 # Dataset binding functions to bind the functions above to the `Dataset Instance`.
 leap_binder.set_preprocess(function=preprocess_func)
+
 leap_binder.set_input(function=input_encoder_source_image, name='source_image')
 leap_binder.set_input(function=input_encoder_current_frame, name='current_frame')
 leap_binder.set_input(function=input_encoder_first_frame, name='first_frame')
+
 leap_binder.set_metadata(get_idx, name='idx')
 leap_binder.set_metadata(get_fname, name='file_name')
 leap_binder.set_metadata(get_folder_name, name='folder_name')
@@ -191,6 +192,8 @@ leap_binder.set_metadata(source_image_color_brightness_mean, name='source_image_
 leap_binder.set_metadata(source_image_color_brightness_std, name='source_image_color_brightness_std')
 leap_binder.set_metadata(source_image_hsv, name='source_image_hsv')
 leap_binder.set_metadata(source_image_lab, name='source_image_lab')
+
+leap_binder.add_custom_loss(zero_loss, name='zero_loss')
 
 if __name__ == '__main__':
     leap_binder.check()
