@@ -1,11 +1,11 @@
-codeIntegrationId: 6612a25e78a3bac0d44f449e
-projectId: ""
-secretId: 661beaa90409d47d181178a4
+codeIntegrationId: 661bec26b1f009b7ff0baf39
+projectId: 6612a25978a3bac0d44f449a
+secretId: 661bed0cb1f009b7ff0baf4b
 entryFile: leap_binder.py
 include:
     - leap_binder.py
     - leap_custom_test.py
-    - casablanca/data/preprocess.py
-    - casablanca/utils/gcs_utils.py
     - casablanca/config.py
-    - casablanca/config.yml
+    - casablanca/config.yaml
+    - casablanca/utils/*.py
+    - casablanca/data/*.py
