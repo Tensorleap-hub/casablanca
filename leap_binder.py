@@ -1,3 +1,8 @@
+from casablanca.utils.packages import install_all_packages
+from casablanca.utils.visuelizers import Image_change_last
+from code_loader.contract.enums import LeapDataType
+
+install_all_packages()
 from typing import List, Dict, Union
 
 import cv2
@@ -12,8 +17,8 @@ from code_loader import leap_binder
 from code_loader.contract.datasetclasses import PreprocessResponse
 
 from casablanca.data.preprocess import load_data
-from casablanca.losses import zero_loss
 from casablanca.utils.gcs_utils import _download
+from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg, dummy_loss
 
 
 # Preprocess Function
@@ -21,7 +26,8 @@ def preprocess_func() -> List[PreprocessResponse]:
     test_videos = load_data('test')
     test_size = min(CONFIG['test_size'], len(test_videos))
 
-    train_videos = load_data('dev')
+    # train_videos = load_data('dev')
+    train_videos = test_videos
     train_size = min(CONFIG['train_size'], len(train_videos))
 
     train_videos = test_videos
@@ -52,7 +58,8 @@ def input_encoder_video(idx: int, preprocess: PreprocessResponse, frame_number) 
     vid_dict = read_video(fpath, pts_unit='sec')
     vid = vid_dict[0].permute(0, 3, 1, 2)
     if vid.shape[2] != 256:
-        vid = nn.functional.interpolate(vid.to(dtype=torch.float32), size=(256, 256), mode='bilinear', align_corners=False)
+        vid = nn.functional.interpolate(vid.to(dtype=torch.float32), size=(256, 256), mode='bilinear',
+                                        align_corners=False)
     vid = vid.unsqueeze(0)
     vid_norm = (vid / 255.0 - 0.5) * 2.0
     vid_norm = vid_norm[0]
@@ -63,19 +70,27 @@ def input_encoder_video(idx: int, preprocess: PreprocessResponse, frame_number) 
 def input_encoder_source_image(idx: int, preprocess: PreprocessResponse):
     frame_number = 0
     frame = input_encoder_video(idx, preprocess, frame_number)
+    # frame = frame.numpy().astype(np.float32)
+    # return np.transpose(frame, (1, 2, 0))
     return frame.numpy().astype(np.float32)
 
 
 def input_encoder_current_frame(idx: int, preprocess: PreprocessResponse):
-    frame_number = 0
+    frame_number = 10
     frame = input_encoder_video(idx, preprocess, frame_number)
+    # frame.numpy().astype(np.float32)
+    # return np.transpose(frame, (1, 2, 0))
     return frame.numpy().astype(np.float32)
+
 
 
 def input_encoder_first_frame(idx: int, preprocess: PreprocessResponse):
     frame_number = 0
     frame = input_encoder_video(idx, preprocess, frame_number)
+    # frame.numpy().astype(np.float32)
+    # return np.transpose(frame, (1, 2, 0))
     return frame.numpy().astype(np.float32)
+
 
 
 def get_idx(idx: int, preprocess: PreprocessResponse) -> int:
@@ -104,7 +119,7 @@ def source_image_brightness(frame) -> float:
 
 
 def source_image_color_brightness_mean(idx: int, preprocess: PreprocessResponse) -> dict:
-    frame = (input_encoder_source_image(idx, preprocess))
+    frame = (input__image(idx, preprocess))
     frame = np.transpose(frame, (1, 2, 0))
     b, g, r = cv2.split(frame)
     res = {"red": float(r.mean()), "green": float(g.mean()), "blue": float(b.mean())}
@@ -113,7 +128,7 @@ def source_image_color_brightness_mean(idx: int, preprocess: PreprocessResponse)
 
 
 def source_image_color_brightness_std(idx: int, preprocess: PreprocessResponse) -> dict:
-    frame = (input_encoder_source_image(idx, preprocess))
+    frame = (input__image(idx, preprocess))
     frame = np.transpose(frame, (1, 2, 0))
     b, g, r = cv2.split(frame)
     res = {"red": float(r.std()), "green": float(g.std()), "blue": float(b.std())}
@@ -130,7 +145,7 @@ def source_image_contrast(frame) -> float:
 
 
 def source_image_hsv(idx: int, preprocess: PreprocessResponse) -> Dict[str, float]:
-    frame = (input_encoder_source_image(idx, preprocess))
+    frame = (input__image(idx, preprocess))
     frame = np.transpose(frame, (1, 2, 0))
     hsv_image = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
     hue_range = np.ptp(hsv_image[:, :, 0])  #
@@ -161,8 +176,14 @@ def get_video(idx: int, preprocess: PreprocessResponse):
     return video
 
 
+def input__image(idx: int, preprocess: PreprocessResponse):
+    frame_number = 0
+    frame = input_encoder_video(idx, preprocess, frame_number)
+    return frame.numpy().astype(np.float32)
+
+
 def metadata_dict(idx: int, preprocess: PreprocessResponse) -> Dict[str, Union[float, int, str]]:
-    frame = (input_encoder_source_image(idx, preprocess))
+    frame = (input__image(idx, preprocess))
     frame = np.transpose(frame, (1, 2, 0))
     video = get_video(idx, preprocess)
 
@@ -184,6 +205,8 @@ leap_binder.set_input(function=input_encoder_source_image, name='source_image')
 leap_binder.set_input(function=input_encoder_current_frame, name='current_frame')
 leap_binder.set_input(function=input_encoder_first_frame, name='first_frame')
 
+leap_binder.set_ground_truth(input_encoder_source_image, 'gt_source_image')
+
 leap_binder.set_metadata(get_idx, name='idx')
 leap_binder.set_metadata(get_fname, name='file_name')
 leap_binder.set_metadata(get_folder_name, name='folder_name')
@@ -193,7 +216,11 @@ leap_binder.set_metadata(source_image_color_brightness_std, name='source_image_c
 leap_binder.set_metadata(source_image_hsv, name='source_image_hsv')
 leap_binder.set_metadata(source_image_lab, name='source_image_lab')
 
-leap_binder.add_custom_loss(zero_loss, name='zero_loss')
+leap_binder.set_visualizer(Image_change_last, 'Image_change_last', LeapDataType.Image)
+
+leap_binder.add_custom_loss(lpip_loss_alex, 'lpip_alex_loss')
+leap_binder.add_custom_loss(lpip_loss_vgg, 'lpip_vgg_loss')
+leap_binder.add_custom_loss(dummy_loss, 'dummy_loss')
 
 if __name__ == '__main__':
     leap_binder.check()
