@@ -47,7 +47,6 @@ def check_custom_test():
         current_frame_vis = Image_change_last(current_frame)
         first_frame_vis = Image_change_last(first_frame)
 
-
         metadata = metadata_dict(idx, responses_set)
         idx_ = get_idx(idx, responses_set)
         file_name = get_fname(idx, responses_set)
@@ -56,8 +55,6 @@ def check_custom_test():
         source_image_color_brightness_std_ = source_image_color_brightness_std(idx, responses_set)
         source_image_hsv_ = source_image_hsv(idx, responses_set)
         source_image_lab_ = source_image_lab(idx, responses_set)
-
-
 
     print("successfully!")
 

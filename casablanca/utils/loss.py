@@ -34,9 +34,6 @@ def lpip_loss_vgg(src_image, pred_image):
 
 
 def dummy_loss(src_image, pred_image):
-    print('src_image:')
     src_image = check_tensor(src_image)
-    print('pred_image:')
-
     pred_image = check_tensor(pred_image)
     return torch.tensor([0])

@@ -1,8 +1,10 @@
 PROJECT_ID: 'casablanca-dev-project'
 BUCKET_NAME: 'casablanca-datasets'
 
-test_size: 1000
-train_size: 1000
+test_size: 2000
+train_size: 2000
 
 packages:
   - lpips
+
+max_utterances_pre_id: 10
