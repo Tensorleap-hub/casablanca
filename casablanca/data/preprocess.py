@@ -7,6 +7,17 @@ import os
 import json
 import torch.nn as nn
 from torchvision.io import read_video
+import numpy as np
+
+def get_ids(file_names_all):
+    ids = [float((file.split('/')[-3])[2:]) for file in file_names_all]
+    ids_set = {*ids}
+    ids = list(ids_set)
+    np.random.seed(42)
+    np.random.shuffle(ids)
+    selected_ids = ids[:20]
+
+    print(selected_ids)
 
 
 def load_data(set):
@@ -15,6 +26,7 @@ def load_data(set):
                       bucket.list_blobs(prefix=str(Path('data') / set / 'mp4'))]
 
     file_names_all = [file for file in file_names_all if file.split('/')[-1] != '.DS_Store']
+    selected_ids = get_ids(file_names_all)
     return file_names_all
 
 

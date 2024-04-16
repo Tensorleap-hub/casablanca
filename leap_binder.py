@@ -1,5 +1,5 @@
 from casablanca.utils.packages import install_all_packages
-from casablanca.utils.visuelizers import Image_change_last
+from casablanca.utils.visuelizers import Image_change_last, grid_frames
 from code_loader.contract.enums import LeapDataType
 
 install_all_packages()
@@ -80,6 +80,7 @@ def input_encoder_current_frame(idx: int, preprocess: PreprocessResponse):
     frame = input_encoder_video(idx, preprocess, frame_number)
     # frame.numpy().astype(np.float32)
     # return np.transpose(frame, (1, 2, 0))
+
     return frame.numpy().astype(np.float32)
 
 
@@ -89,6 +90,7 @@ def input_encoder_first_frame(idx: int, preprocess: PreprocessResponse):
     frame = input_encoder_video(idx, preprocess, frame_number)
     # frame.numpy().astype(np.float32)
     # return np.transpose(frame, (1, 2, 0))
+
     return frame.numpy().astype(np.float32)
 
 
@@ -217,6 +219,7 @@ leap_binder.set_metadata(source_image_hsv, name='source_image_hsv')
 leap_binder.set_metadata(source_image_lab, name='source_image_lab')
 
 leap_binder.set_visualizer(Image_change_last, 'Image_change_last', LeapDataType.Image)
+leap_binder.set_visualizer(grid_frames, 'grid_frames', LeapDataType.Image)
 
 leap_binder.add_custom_loss(lpip_loss_alex, 'lpip_alex_loss')
 leap_binder.add_custom_loss(lpip_loss_vgg, 'lpip_vgg_loss')

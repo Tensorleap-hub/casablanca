@@ -3,8 +3,8 @@ from os import environ
 import onnxruntime
 import numpy as np
 
-from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg
-from casablanca.utils.visuelizers import Image_change_last
+from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg, dummy_loss
+from casablanca.utils.visuelizers import Image_change_last, grid_frames
 from leap_binder import input_encoder_source_image, input_encoder_video, preprocess_func, input_encoder_current_frame, \
     input_encoder_first_frame, metadata_dict, get_fname, get_folder_name, source_image_color_brightness_mean, \
     source_image_color_brightness_std, source_image_hsv, source_image_lab, get_idx
@@ -40,7 +40,9 @@ def check_custom_test():
 
         loss_alex = lpip_loss_alex(np.expand_dims(source_image, 0), pred)
         loss_vgg = lpip_loss_vgg(np.expand_dims(source_image, 0), pred)
+        dummy_loss_ = dummy_loss(np.expand_dims(source_image, 0), pred)
 
+        grid_frames_ = grid_frames(first_frame, current_frame)
         source_image_vis = Image_change_last(source_image)
         current_frame_vis = Image_change_last(current_frame)
         first_frame_vis = Image_change_last(first_frame)
