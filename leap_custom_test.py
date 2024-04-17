@@ -7,7 +7,7 @@ from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg, dummy_loss
 from casablanca.utils.visuelizers import Image_change_last, grid_frames
 from leap_binder import input_encoder_source_image, input_encoder_video, preprocess_func, input_encoder_current_frame, \
     input_encoder_first_frame, metadata_dict, get_fname, get_folder_name, source_image_color_brightness_mean, \
-    source_image_color_brightness_std, source_image_hsv, source_image_lab, get_idx
+    source_image_color_brightness_std, source_image_hsv, source_image_lab, get_idx, get_id_of_source_image, get_id
 
 
 def check_custom_test():
@@ -34,20 +34,22 @@ def check_custom_test():
         current_frame = input_encoder_current_frame(idx, responses_set)
         first_frame = input_encoder_first_frame(idx, responses_set)
 
-        pred = sess.run(output_names, {input_name_1: np.expand_dims(source_image, 0),
-                                       input_name_2: np.expand_dims(first_frame, 0),
-                                       input_name_3: np.expand_dims(current_frame, 0)})[0]
-
-        loss_alex = lpip_loss_alex(np.expand_dims(source_image, 0), pred)
-        loss_vgg = lpip_loss_vgg(np.expand_dims(source_image, 0), pred)
-        dummy_loss_ = dummy_loss(np.expand_dims(source_image, 0), pred)
+        # pred = sess.run(output_names, {input_name_1: np.expand_dims(source_image, 0),
+        #                                input_name_2: np.expand_dims(first_frame, 0),
+        #                                input_name_3: np.expand_dims(current_frame, 0)})[0]
+        #
+        loss_alex = lpip_loss_alex(np.expand_dims(source_image, 0), np.expand_dims(source_image, 0))
+        # loss_vgg = lpip_loss_vgg(np.expand_dims(source_image, 0), pred)
+        # dummy_loss_ = dummy_loss(np.expand_dims(source_image, 0), pred)
 
         grid_frames_ = grid_frames(first_frame, current_frame)
-        source_image_vis = Image_change_last(source_image)
-        current_frame_vis = Image_change_last(current_frame)
-        first_frame_vis = Image_change_last(first_frame)
+        # source_image_vis = Image_change_last(source_image)
+        # current_frame_vis = Image_change_last(current_frame)
+        # first_frame_vis = Image_change_last(first_frame)
 
         metadata = metadata_dict(idx, responses_set)
+        id_of_source_image = get_id_of_source_image(idx, responses_set)
+        id = get_id(idx, responses_set)
         idx_ = get_idx(idx, responses_set)
         file_name = get_fname(idx, responses_set)
         folder_name = get_folder_name(idx, responses_set)

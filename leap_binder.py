@@ -92,27 +92,44 @@ def input_encoder_source_image(idx: int, preprocess: PreprocessResponse):
 
     frame_number = 1
     frame = input_video(video_name, frame_number)
-    # frame = frame.numpy().astype(np.float32)
-    # return np.transpose(frame, (1, 2, 0))
-    return frame.numpy().astype(np.float32)
+    frame = frame.numpy().astype(np.float32)
+    return np.transpose(frame, (1, 2, 0))
+
+    # return frame.numpy().astype(np.float32)
+
+
+def get_id_of_source_image(idx: int, preprocess: PreprocessResponse):
+    filenames = preprocess.data['videos']
+    filename = preprocess.data['videos'][idx]
+    filename_id = filename.split('/')[3]
+    if idx % 2 == 0:
+        same_ids = [file for file in filenames if file.split('/')[3] == filename_id and file != filename]
+        random.seed(42)
+        video_name = random.choice(same_ids)
+
+    else:
+        diff_ids = [file for file in filenames if file.split('/')[3] != filename_id]
+        video_name = random.choice(diff_ids)
+
+    return video_name.split('/')[3]
 
 
 def input_encoder_current_frame(idx: int, preprocess: PreprocessResponse):
     frame_number = 10
     frame = input_encoder_video(idx, preprocess, frame_number)
-    # frame.numpy().astype(np.float32)
-    # return np.transpose(frame, (1, 2, 0))
+    frame.numpy().astype(np.float32)
+    return np.transpose(frame, (1, 2, 0))
 
-    return frame.numpy().astype(np.float32)
+    # return frame.numpy().astype(np.float32)
 
 
 def input_encoder_first_frame(idx: int, preprocess: PreprocessResponse):
     frame_number = 0
     frame = input_encoder_video(idx, preprocess, frame_number)
-    # frame.numpy().astype(np.float32)
-    # return np.transpose(frame, (1, 2, 0))
+    frame.numpy().astype(np.float32)
+    return np.transpose(frame, (1, 2, 0))
 
-    return frame.numpy().astype(np.float32)
+    # return frame.numpy().astype(np.float32)
 
 
 def get_idx(idx: int, preprocess: PreprocessResponse) -> int:
@@ -185,7 +202,7 @@ def source_image_hsv(idx: int, preprocess: PreprocessResponse) -> Dict[str, floa
 
 def source_image_lab(idx: int, preprocess: PreprocessResponse) -> Dict[str, float]:
     frame = (input_encoder_source_image(idx, preprocess))
-    frame = np.transpose(frame, (1, 2, 0))
+    # frame = np.transpose(frame, (1, 2, 0))
     lab_image = cv2.cvtColor(frame, cv2.COLOR_RGB2LAB)
     lightness_mean = np.mean(lab_image[:, :, 0])
     a_mean = np.mean(lab_image[:, :, 1])
@@ -236,6 +253,7 @@ leap_binder.set_ground_truth(input_encoder_source_image, 'gt_source_image')
 
 leap_binder.set_metadata(get_idx, name='idx')
 leap_binder.set_metadata(get_fname, name='file_name')
+leap_binder.set_metadata(get_id_of_source_image, name='id_of_source_image')
 leap_binder.set_metadata(get_folder_name, name='utterances')
 leap_binder.set_metadata(get_id, name='id')
 leap_binder.set_metadata(metadata_dict, name='')
@@ -250,6 +268,7 @@ leap_binder.set_visualizer(grid_frames, 'grid_frames', LeapDataType.Image)
 leap_binder.add_custom_loss(lpip_loss_alex, 'lpip_alex_loss')
 leap_binder.add_custom_loss(lpip_loss_vgg, 'lpip_vgg_loss')
 leap_binder.add_custom_loss(dummy_loss, 'dummy_loss')
+leap_binder.add_custom_metric()
 
 if __name__ == '__main__':
     leap_binder.check()
