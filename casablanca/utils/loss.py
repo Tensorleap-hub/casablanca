@@ -30,8 +30,8 @@ def lpip_loss_alex(src_image, pred_image):
 def lpip_loss_vgg(src_image, pred_image):
     src_image = turn_to_pytorch_tensor(src_image)
     pred_image = turn_to_pytorch_tensor(pred_image)
-    src_image = src_image.permute(2, 1, 0)
-    pred_image = pred_image.permute(2, 0, 1)
+    src_image = src_image.permute(0, 3, 1, 2)
+    pred_image = pred_image.permute(0, 3, 1, 2)
     loss_fn_vgg = lpips.LPIPS(net='vgg')
     result = loss_fn_vgg(src_image, pred_image)
     return (result[0, 0, 0]).detach()

@@ -32,6 +32,15 @@ def load_data(set):
 
     filtered_list = [item for item in file_names_all if item.split('/')[3] in selected_ids]
     #TODO: maybe filter just 10 each
+
+    if CONFIG[f'{set}_size'] < len(filtered_list):
+        np.random.seed(42)
+        np.random.shuffle(filtered_list)
+        filtered_list = filtered_list[:CONFIG[f'{set}_size']]
+        ids = [(file.split('/')[-3])[2:] for file in filtered_list]
+        ids_set = {*ids}
+        selected_ids = list(ids_set)
+
     return filtered_list, selected_ids
 
 

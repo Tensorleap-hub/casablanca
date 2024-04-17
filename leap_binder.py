@@ -1,35 +1,37 @@
 from casablanca.utils.packages import install_all_packages
-from casablanca.utils.visuelizers import Image_change_last, grid_frames
-from code_loader.contract.enums import LeapDataType
-import random
-
 install_all_packages()
-from typing import List, Dict, Union
 
+import random
+from typing import List, Dict, Union
 import cv2
 import numpy as np
 import torch
 import torch.nn as nn
 from torchvision.io import read_video
-from casablanca.config import CONFIG
+
 
 # Tensorleap imports
 from code_loader import leap_binder
 from code_loader.contract.datasetclasses import PreprocessResponse
+from code_loader.contract.enums import LeapDataType, MetricDirection
+
 
 from casablanca.data.preprocess import load_data
 from casablanca.utils.gcs_utils import _download
 from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg, dummy_loss
+from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric
+from casablanca.utils.visuelizers import Image_change_last, grid_frames
+from casablanca.config import CONFIG
 
 
 # Preprocess Function
 def preprocess_func() -> List[PreprocessResponse]:
     test_videos, test_selected_ids = load_data('test')
-    test_size = min(CONFIG['test_size'], len(test_videos))
+    test_size = len(test_videos)
 
     train_videos, train_selected_ids = load_data('dev')
     # train_videos, train_selected_ids = test_videos, test_selected_ids
-    train_size = min(CONFIG['train_size'], len(train_videos))
+    train_size = len(train_videos)
 
     train = PreprocessResponse(length=train_size, data={'videos': train_videos, 'selected_ids': train_selected_ids})
     test = PreprocessResponse(length=test_size, data={'videos': test_videos, 'selected_ids': test_selected_ids})
@@ -83,12 +85,19 @@ def input_encoder_source_image(idx: int, preprocess: PreprocessResponse):
     filename_id = filename.split('/')[3]
     if idx % 2 == 0:
         same_ids = [file for file in filenames if file.split('/')[3] == filename_id and file != filename]
-        random.seed(42)
-        video_name = random.choice(same_ids)
+        if not same_ids:
+            video_name = filename
+        else:
+            random.seed(42)
+            video_name = random.choice(same_ids)
 
     else:
         diff_ids = [file for file in filenames if file.split('/')[3] != filename_id]
-        video_name = random.choice(diff_ids)
+        if not diff_ids:
+            video_name = filename
+        else:
+            random.seed(42)
+            video_name = random.choice(diff_ids)
 
     frame_number = 1
     frame = input_video(video_name, frame_number)
@@ -104,12 +113,19 @@ def get_id_of_source_image(idx: int, preprocess: PreprocessResponse):
     filename_id = filename.split('/')[3]
     if idx % 2 == 0:
         same_ids = [file for file in filenames if file.split('/')[3] == filename_id and file != filename]
-        random.seed(42)
-        video_name = random.choice(same_ids)
+        if not same_ids:
+            video_name = filename
+        else:
+            random.seed(42)
+            video_name = random.choice(same_ids)
 
     else:
         diff_ids = [file for file in filenames if file.split('/')[3] != filename_id]
-        video_name = random.choice(diff_ids)
+        if not diff_ids:
+            video_name = filename
+        else:
+            random.seed(42)
+            video_name = random.choice(diff_ids)
 
     return video_name.split('/')[3]
 
@@ -265,10 +281,9 @@ leap_binder.set_metadata(source_image_lab, name='source_image_lab')
 leap_binder.set_visualizer(Image_change_last, 'Image_change_last', LeapDataType.Image)
 leap_binder.set_visualizer(grid_frames, 'grid_frames', LeapDataType.Image)
 
-leap_binder.add_custom_loss(lpip_loss_alex, 'lpip_alex_loss')
-leap_binder.add_custom_loss(lpip_loss_vgg, 'lpip_vgg_loss')
+leap_binder.add_custom_metric(lpip_alex_metric, 'lpip_alex', direction=MetricDirection.Upward)
+leap_binder.add_custom_metric(lpip_vgg_metric, 'lpip_vgg', direction=MetricDirection.Upward)
 leap_binder.add_custom_loss(dummy_loss, 'dummy_loss')
-leap_binder.add_custom_metric()
 
 if __name__ == '__main__':
     leap_binder.check()

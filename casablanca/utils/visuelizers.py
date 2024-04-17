@@ -10,6 +10,8 @@ def Image_change_last(image: np.ndarray) -> LeapImage:
 def grid_frames(first_frame: np.ndarray, current_frame: np.ndarray) -> LeapImage:
     # first_frame_transposed = np.transpose(first_frame, (1, 2, 0))
     # current_frame_transposed = np.transpose(current_frame, (1, 2, 0))
-    concatenated_image = np.hstack((first_frame, current_frame))
+    first_frame = first_frame * 255.0
+    current_frame = current_frame * 255.0
+    concatenated_image = (np.hstack((first_frame, current_frame)))
 
-    return LeapImage(concatenated_image.astype(np.float32))
+    return LeapImage(concatenated_image.astype(np.uint8))
