@@ -1,8 +1,10 @@
 from pathlib import Path
 
+import pandas as pd
+
 # Tensorleap imports
 from casablanca.config import CONFIG
-from casablanca.utils.gcs_utils import _connect_to_gcs_and_return_bucket
+from casablanca.utils.gcs_utils import _connect_to_gcs_and_return_bucket, _download
 import os
 import json
 import torch.nn as nn
@@ -14,26 +16,21 @@ def get_ids(file_names_all) -> list:
     ids = [(file.split('/')[-3])[2:] for file in file_names_all]
     ids_set = {*ids}
     ids = list(ids_set)
-    ids = ['id'+number for number in ids]
+    ids = ['id' + number for number in ids]
     return ids
 
 
-def load_data(set):
-    bucket = _connect_to_gcs_and_return_bucket(CONFIG['BUCKET_NAME'])
-    file_names_all = [blob.name for blob in
-                      bucket.list_blobs(prefix=str(Path('data') / set / 'mp4'))]
-
-    file_names_all = [file for file in file_names_all if file.split('/')[-1] != '.DS_Store']
-    if CONFIG[f'{set}_size'] is not None:
-            if CONFIG[f'{set}_size'] < len(file_names_all):
-                np.random.seed(42)
-                np.random.shuffle(file_names_all)
-                file_names_all = file_names_all[:CONFIG[f'{set}_size']]
-
-    selected_ids = get_ids(file_names_all)
-
-    #TODO: maybe filter just 10 each
-    return file_names_all, selected_ids
+def load_data():
+    files_df = pd.read_csv(_download(CONFIG['data_filepath']), sep='\t')
+    selected_ids = CONFIG['dataset_creation']['ids']
+    frames = CONFIG['dataset_creation']['frames']
+    frames_indices = list(range(frames['initial'], frames['final'] + 1, frames['step']))
+    files_df = files_df[files_df['id'].isin(selected_ids)]
+    files_df = files_df.groupby(['id', 'vid_name']).head(CONFIG['dataset_creation']['n_clips_per_video']).groupby(
+        'id').head(CONFIG['dataset_creation']['n_videos_per_id'])
+    repeated_df = pd.DataFrame(np.repeat(files_df.values, len(frames_indices), axis=0), columns=files_df.columns)
+    repeated_df['frame_id'] = np.tile(frames_indices, len(files_df))
+    return repeated_df
 
 
 def count_frames(video_path):

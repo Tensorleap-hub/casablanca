@@ -1,6 +1,7 @@
+
 from casablanca.utils.packages import install_all_packages
 
-install_all_packages()
+# install_all_packages()
 
 import random
 from typing import List, Dict, Union
@@ -25,16 +26,14 @@ from casablanca.config import CONFIG
 
 # Preprocess Function
 def preprocess_func() -> List[PreprocessResponse]:
-    test_videos, test_selected_ids = load_data('test')
-    test_size = len(test_videos)
+    data = load_data()
 
-    train_videos, train_selected_ids = load_data('dev')
-    # train_videos, train_selected_ids = test_videos, test_selected_ids
-    train_size = len(train_videos)
+    train_df = data.sample(frac=CONFIG['train_ratio'], random_state=42)
+    val_df = data.drop(train_df.index)
 
-    train = PreprocessResponse(length=train_size, data={'videos': train_videos, 'selected_ids': train_selected_ids})
-    test = PreprocessResponse(length=test_size, data={'videos': test_videos, 'selected_ids': test_selected_ids})
-    response = [train, test]
+    train = PreprocessResponse(length=train_df.shape[0], data=train_df)
+    val = PreprocessResponse(length=val_df.shape[0], data=val_df)
+    response = [train, val]
     return response
 
 
