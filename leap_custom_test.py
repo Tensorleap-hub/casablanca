@@ -8,7 +8,8 @@ from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric
 from casablanca.utils.visuelizers import Image_change_last, grid_frames
 from leap_binder import input_encoder_source_image, input_encoder_video, preprocess_func, input_encoder_current_frame, \
     input_encoder_first_frame, metadata_dict, get_fname, get_folder_name, source_image_color_brightness_mean, \
-    source_image_color_brightness_std, source_image_hsv, source_image_lab, get_idx, get_id_of_source_image, get_id
+    source_image_color_brightness_std, source_image_hsv, source_image_lab, get_idx, get_id_of_source_image, get_id, \
+    get_utterances_of_source_image, get_video_path_of_source_image
 
 
 def check_custom_test():
@@ -44,17 +45,23 @@ def check_custom_test():
             loss_vgg = lpip_vgg_metric(np.expand_dims(source_image, 0), np.expand_dims(source_image, 0))
             dummy_loss_ = dummy_loss(np.expand_dims(source_image, 0), np.expand_dims(source_image, 0))
 
-            grid_frames_ = grid_frames(first_frame, current_frame)
+            # grid_frames_ = grid_frames(first_frame, current_frame)
             # source_image_vis = Image_change_last(source_image)
             # current_frame_vis = Image_change_last(current_frame)
             # first_frame_vis = Image_change_last(first_frame)
 
             metadata = metadata_dict(idx, responses_set)
+            utterances_of_source_image = get_utterances_of_source_image(idx, responses_set)
+            video_path_of_source_image = get_video_path_of_source_image(idx, responses_set)
             id_of_source_image = get_id_of_source_image(idx, responses_set)
+            print(f'id_of_source_image: {id_of_source_image}')
+            print(f'video_path_of_source_image: {video_path_of_source_image}')
+            print(f'utterances_of_source_image: {utterances_of_source_image}')
+
             id = get_id(idx, responses_set)
             idx_ = get_idx(idx, responses_set)
-            file_name = get_fname(idx, responses_set)
-            folder_name = get_folder_name(idx, responses_set)
+            video_path = get_fname(idx, responses_set)
+            utterances = get_folder_name(idx, responses_set)
             source_image_color_brightness_mean_ = source_image_color_brightness_mean(idx, responses_set)
             source_image_color_brightness_std_ = source_image_color_brightness_std(idx, responses_set)
             source_image_hsv_ = source_image_hsv(idx, responses_set)

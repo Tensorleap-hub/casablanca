@@ -14,11 +14,7 @@ def get_ids(file_names_all) -> list:
     ids = [(file.split('/')[-3])[2:] for file in file_names_all]
     ids_set = {*ids}
     ids = list(ids_set)
-    np.random.seed(42)
-    np.random.shuffle(ids)
-    selected_ids = ids[:20]
-    ids = ['id'+number for number in selected_ids]
-
+    ids = ['id'+number for number in ids]
     return ids
 
 
@@ -28,20 +24,16 @@ def load_data(set):
                       bucket.list_blobs(prefix=str(Path('data') / set / 'mp4'))]
 
     file_names_all = [file for file in file_names_all if file.split('/')[-1] != '.DS_Store']
+    if CONFIG[f'{set}_size'] is not None:
+            if CONFIG[f'{set}_size'] < len(file_names_all):
+                np.random.seed(42)
+                np.random.shuffle(file_names_all)
+                file_names_all = file_names_all[:CONFIG[f'{set}_size']]
+
     selected_ids = get_ids(file_names_all)
 
-    filtered_list = [item for item in file_names_all if item.split('/')[3] in selected_ids]
     #TODO: maybe filter just 10 each
-
-    if CONFIG[f'{set}_size'] < len(filtered_list):
-        np.random.seed(42)
-        np.random.shuffle(filtered_list)
-        filtered_list = filtered_list[:CONFIG[f'{set}_size']]
-        ids = [(file.split('/')[-3])[2:] for file in filtered_list]
-        ids_set = {*ids}
-        selected_ids = list(ids_set)
-
-    return filtered_list, selected_ids
+    return file_names_all, selected_ids
 
 
 def count_frames(video_path):
