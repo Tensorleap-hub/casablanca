@@ -1,0 +1,255 @@
+decorators:
+  - operation: Input
+    data:
+      type: Input
+      output_name: source_image
+    id: '518'
+    inputs: {}
+    outputs:
+      source_image:
+        - inputKey: input
+          operation: Permute
+          name: permute_249
+          id: '517'
+        - inputKey: data
+          operation: Visualizer
+          id: '2079'
+  - operation: Input
+    data:
+      type: Input
+      output_name: current_frame
+    id: '768'
+    inputs: {}
+    outputs:
+      current_frame:
+        - inputKey: input
+          operation: Permute
+          name: permute_251
+          id: '767'
+        - inputKey: data
+          operation: Visualizer
+          id: '2080'
+        - inputKey: current_frame
+          operation: Visualizer
+          id: '2082'
+  - operation: Input
+    data:
+      type: Input
+      output_name: first_frame
+    id: '1017'
+    inputs: {}
+    outputs:
+      first_frame:
+        - inputKey: input
+          operation: Permute
+          name: permute_253
+          id: '1016'
+        - inputKey: first_frame
+          operation: Visualizer
+          id: '2082'
+        - inputKey: data
+          operation: Visualizer
+          id: '2081'
+  - operation: Visualizer
+    data:
+      type: Visualizer
+      name: Image
+      visualizer_name: Image
+      visualizer_type: Image
+      arg_names:
+        - data
+      user_unique_name: source_image
+    id: '2079'
+    inputs:
+      data:
+        - outputKey: source_image
+          operation: Input
+          id: '518'
+    outputs: {}
+  - operation: Visualizer
+    data:
+      type: Visualizer
+      name: Image
+      visualizer_name: Image
+      visualizer_type: Image
+      arg_names:
+        - data
+      user_unique_name: current_frame
+    id: '2080'
+    inputs:
+      data:
+        - outputKey: current_frame
+          operation: Input
+          id: '768'
+    outputs: {}
+  - operation: Visualizer
+    data:
+      type: Visualizer
+      name: Image
+      visualizer_name: Image
+      visualizer_type: Image
+      arg_names:
+        - data
+      user_unique_name: first_frame
+    id: '2081'
+    inputs:
+      data:
+        - outputKey: first_frame
+          operation: Input
+          id: '1017'
+    outputs: {}
+  - operation: Visualizer
+    data:
+      type: Visualizer
+      name: grid_frames
+      visualizer_name: grid_frames
+      visualizer_type: Image
+      arg_names:
+        - first_frame
+        - current_frame
+      user_unique_name: grid_frames
+    id: '2082'
+    inputs:
+      current_frame:
+        - outputKey: current_frame
+          operation: Input
+          id: '768'
+      first_frame:
+        - outputKey: first_frame
+          operation: Input
+          id: '1017'
+    outputs: {}
+  - operation: Visualizer
+    data:
+      type: Visualizer
+      name: Image
+      visualizer_name: Image
+      visualizer_type: Image
+      arg_names:
+        - data
+      user_unique_name: pred
+    id: '2083'
+    inputs:
+      data:
+        - outputKey: feature_map
+          operation: Permute
+          name: permute_254
+          id: '1'
+    outputs: {}
+  - operation: GroundTruth
+    data:
+      type: GroundTruth
+      output_name: gt_source_image
+      selected: gt_source_image
+    id: '2084'
+    inputs: {}
+    outputs:
+      gt_source_image:
+        - inputKey: src_image
+          operation: Metric
+          id: '2087'
+        - inputKey: src_image
+          operation: Metric
+          id: '2088'
+        - inputKey: data
+          operation: Visualizer
+          id: '2089'
+        - inputKey: src_image
+          operation: CustomLoss
+          id: '2085'
+  - operation: CustomLoss
+    data:
+      arg_names:
+        - src_image
+        - pred_image
+      user_unique_name: lpip_alex_loss
+      name: dummy_loss
+      selected: dummy_loss
+      type: CustomLoss
+    id: '2085'
+    inputs:
+      pred_image:
+        - outputKey: feature_map
+          operation: Permute
+          name: permute_254
+          id: '1'
+      src_image:
+        - outputKey: gt_source_image
+          operation: GroundTruth
+          id: '2084'
+    outputs:
+      loss:
+        - inputKey: '0'
+          operation: Adam
+          id: '2086'
+  - operation: Adam
+    data:
+      type: Optimizer
+      custom_input_keys:
+        - 2086-0
+    id: '2086'
+    inputs:
+      '0':
+        - outputKey: loss
+          operation: CustomLoss
+          id: '2085'
+    outputs: {}
+  - operation: Metric
+    data:
+      type: Metric
+      name: lpip_alex
+      metric_name: lpip_alex
+      arg_names:
+        - src_image
+        - pred_image
+      user_unique_name: lpip_alex
+    id: '2087'
+    inputs:
+      pred_image:
+        - outputKey: feature_map
+          operation: Permute
+          name: permute_254
+          id: '1'
+      src_image:
+        - outputKey: gt_source_image
+          operation: GroundTruth
+          id: '2084'
+    outputs: {}
+  - operation: Metric
+    data:
+      type: Metric
+      name: lpip_vgg
+      metric_name: lpip_vgg
+      arg_names:
+        - src_image
+        - pred_image
+      user_unique_name: lpip_vgg
+    id: '2088'
+    inputs:
+      pred_image:
+        - outputKey: feature_map
+          operation: Permute
+          name: permute_254
+          id: '1'
+      src_image:
+        - outputKey: gt_source_image
+          operation: GroundTruth
+          id: '2084'
+    outputs: {}
+  - operation: Visualizer
+    data:
+      type: Visualizer
+      visualizer_name: Image
+      visualizer_type: Image
+      arg_names:
+        - data
+      user_unique_name: Image
+      name: Image
+    id: '2089'
+    inputs:
+      data:
+        - outputKey: gt_source_image
+          operation: GroundTruth
+          id: '2084'
+    outputs: {}
+layers: []
