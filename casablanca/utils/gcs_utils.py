@@ -57,9 +57,9 @@ def download(cloud_file_path: str, local_file_path: Optional[str] = None) -> str
     dir_path = os.path.dirname(local_file_path)
     os.makedirs(dir_path, exist_ok=True)
     root, extension = os.path.splitext(cloud_file_path)
-    cloud_file_path = root + '.mp4'
+    cloud_file_path = root.split('_')[0] + '.mp4'
     blob = bucket.blob(cloud_file_path)
     root, extension = os.path.splitext(local_file_path)
-    local_file_path = root + '.mp4'
+    local_file_path = root.split('_')[0] + '.mp4'
     blob.download_to_filename(local_file_path)
     return local_file_path

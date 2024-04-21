@@ -1,4 +1,3 @@
-
 import cv2
 import numpy as np
 import torch
@@ -8,6 +7,8 @@ import os
 from PIL import Image
 
 # Tensorleap imports
+from code_loader.utils import rescale_min_max
+
 from casablanca.utils.gcs_utils import download
 
 
@@ -36,13 +37,12 @@ def input_video(fpath, frame_number) -> np.ndarray:
 
 def input_encoder(path, frame_number):
     root, extension = os.path.splitext(path)
-    fpath = download(str(root + '.png'))
+    fpath = download(str(root + '_' + str(frame_number) + '.png'))
     if fpath.rsplit('.', 1)[-1] == 'mp4':
         frame = input_video(fpath, frame_number)
-        dir_path = fpath.rsplit('.', 1)[0] + '.png'
-        frame_uint8 = ((frame + 1.0) / 2.0 * 255.0).clamp(0, 255).to(torch.uint8)  # TODO: fix- maybe min max
-        frame_np = frame_uint8.permute(1, 2, 0).numpy()
-        cv2.imwrite(dir_path, frame_np)
+        dir_path = fpath.rsplit('.', 1)[0] + '_' + str(frame_number) + '.png'
+        frame = rescale_min_max(frame.numpy())
+        cv2.imwrite(dir_path, np.transpose(frame, (1, 2, 0)))
     else:
         frame = input_encoder_image(fpath).numpy()
         frame = np.squeeze(frame, axis=0)
