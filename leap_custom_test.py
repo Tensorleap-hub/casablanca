@@ -6,7 +6,7 @@ import numpy as np
 from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg, dummy_loss
 from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric
 from casablanca.utils.visuelizers import Image_change_last, grid_frames
-from leap_binder import input_encoder_source_image, input_encoder_video, preprocess_func, input_encoder_current_frame, \
+from leap_binder import input_encoder_source_image, preprocess_func, input_encoder_current_frame, \
     input_encoder_first_frame, metadata_dict, get_fname, get_folder_name, source_image_color_brightness_mean, \
     source_image_color_brightness_std, source_image_hsv, source_image_lab, get_idx, get_id_of_source_image, get_id, \
     get_utterances_of_source_image, get_video_path_of_source_image
@@ -32,10 +32,9 @@ def check_custom_test():
         print(f'set: {set}')
         for idx in range(set.length):
             print(f'start idx: {idx}')
-            source_image = input_encoder_source_image(idx, set)
-            current_frame = input_encoder_current_frame(idx, set)
             first_frame = input_encoder_first_frame(idx, set)
-
+            current_frame = input_encoder_current_frame(idx, set)
+            source_image = input_encoder_source_image(idx, set)
 
             # pred = sess.run(output_names, {input_name_1: np.expand_dims(source_image, 0),
             #                                input_name_2: np.expand_dims(first_frame, 0),

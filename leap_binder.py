@@ -1,4 +1,3 @@
-
 from casablanca.utils.packages import install_all_packages
 
 # install_all_packages()
@@ -24,6 +23,7 @@ from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg, dummy_loss
 from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric
 from casablanca.utils.visuelizers import Image_change_last, grid_frames
 from casablanca.config import CONFIG
+from casablanca.utils.general_utils import input_video, input_encoder_image, input_encoder
 
 
 # Preprocess Function
@@ -39,35 +39,27 @@ def preprocess_func() -> List[PreprocessResponse]:
     return response
 
 
-def input_encoder_image(filename) -> np.ndarray:
-    img = Image.open(filename).convert('RGB')
-    img = img.resize((256, 256))
-    img = np.asarray(img)
-    img = np.transpose(img, (2, 0, 1)) / 255.0
-    img = (img - 0.5) * 2.0
-    img = img[np.newaxis, ...]
-    return torch.tensor(img, dtype=torch.float32)
+# ----------------inputs----------------------
 
-def input_video(fpath, frame_number) -> np.ndarray:
-    vid_dict = read_video(fpath, pts_unit='sec')
-    vid = vid_dict[0].permute(0, 3, 1, 2)
-    if vid.shape[2] != 256:
-        vid = nn.functional.interpolate(vid.to(dtype=torch.float32), size=(256, 256), mode='bilinear',
-                                        align_corners=False)
-    vid = vid.unsqueeze(0)
-    vid_norm = (vid / 255.0 - 0.5) * 2.0
-    vid_norm = vid_norm[0]
-
-    return vid_norm[frame_number]
+def input_encoder_source_image(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
+    path = preprocess.data['source_path'][idx]
+    frame_number = 0
+    return input_encoder(path, frame_number)
 
 
-def input_encoder_video(idx: int, preprocess: PreprocessResponse, frame_number) -> np.ndarray:
-    filename = preprocess.data['videos'][idx]
-    vid = input_video(filename, frame_number)
+def input_encoder_current_frame(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
+    path = preprocess.data['vid_path'][idx]
+    frame_number = preprocess.data['frame_id'][idx]
+    return input_encoder(path, frame_number)
 
-    return vid
+
+def input_encoder_first_frame(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
+    path = preprocess.data['vid_path'][idx]
+    frame_number = 0
+    return input_encoder(path, frame_number)
 
 
+# ----------------metadata----------------------
 def get_video_name(idx: int, preprocess: PreprocessResponse) -> str:
     filenames = preprocess.data['videos']
     filename = preprocess.data['videos'][idx]
@@ -90,25 +82,6 @@ def get_video_name(idx: int, preprocess: PreprocessResponse) -> str:
     return video_name
 
 
-def input_encoder_source_image(idx: int, preprocess: PreprocessResponse):
-    path = preprocess.data['path'][idx]
-    frame_number = 0
-    root, extension = os.path.splitext(path)
-    fpath = download(str(root + '.png'))
-    if fpath.rsplit('.', 1)[-1] == 'mp4':
-        frame = input_video(fpath, frame_number)
-        dir_path = fpath.rsplit('.', 1)[0] + '.png'
-        frame_uint8 = ((frame + 1.0) / 2.0 * 255.0).clamp(0, 255).to(torch.uint8)
-        frame_np = frame_uint8.permute(1, 2, 0).numpy()
-        cv2.imwrite(dir_path, frame_np)
-    else:
-        frame = input_encoder_image(fpath).numpy()
-        frame = np.squeeze(frame, axis=0)
-        frame = np.transpose(frame, (1, 2, 0))
-
-    return frame.astype(np.float32)
-
-
 def get_id_of_source_image(idx: int, preprocess: PreprocessResponse) -> str:
     video_name = get_video_name(idx, preprocess)
     return video_name.split('/')[3]
@@ -122,24 +95,6 @@ def get_utterances_of_source_image(idx: int, preprocess: PreprocessResponse) -> 
 def get_video_path_of_source_image(idx: int, preprocess: PreprocessResponse) -> str:
     video_name = get_video_name(idx, preprocess)
     return video_name.split('/')[-3] + '/' + video_name.split('/')[-2] + '/' + video_name.split('/')[-1]
-
-
-def input_encoder_current_frame(idx: int, preprocess: PreprocessResponse):
-    frame_number = 10
-    frame = input_encoder_video(idx, preprocess, frame_number)
-    frame.numpy().astype(np.float32)
-    return np.transpose(frame, (1, 2, 0))
-
-    # return frame.numpy().astype(np.float32)
-
-
-def input_encoder_first_frame(idx: int, preprocess: PreprocessResponse):
-    frame_number = 0
-    frame = input_encoder_video(idx, preprocess, frame_number)
-    frame.numpy().astype(np.float32)
-    return np.transpose(frame, (1, 2, 0))
-
-    # return frame.numpy().astype(np.float32)
 
 
 def get_idx(idx: int, preprocess: PreprocessResponse) -> int:
@@ -233,8 +188,9 @@ def get_video(idx: int, preprocess: PreprocessResponse):
 
 def input__image(idx: int, preprocess: PreprocessResponse):
     frame_number = 0
-    frame = input_encoder_video(idx, preprocess, frame_number)
-    return frame.numpy().astype(np.float32)
+    filename = preprocess.data['videos'][idx]
+    vid = input_video(filename, frame_number)
+    return vid.numpy().astype(np.float32)
 
 
 def metadata_dict(idx: int, preprocess: PreprocessResponse) -> Dict[str, Union[float, int, str]]:
