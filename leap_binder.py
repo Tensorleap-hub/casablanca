@@ -2,7 +2,7 @@ from casablanca.utils.packages import install_all_packages
 
 install_all_packages()
 
-from typing import List, Dict,
+from typing import List, Dict
 import cv2
 import numpy as np
 
