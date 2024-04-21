@@ -11,6 +11,7 @@ packages:
 
 max_utterances_pre_id: 10
 
+frame_separator: "frame"
 dataset_creation:
   unique_ids: 20
   n_videos_per_id: 2
