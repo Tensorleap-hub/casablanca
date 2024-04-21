@@ -7,9 +7,9 @@ from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg, dummy_loss
 from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric
 from casablanca.utils.visuelizers import Image_change_last, grid_frames
 from leap_binder import input_encoder_source_image, preprocess_func, input_encoder_current_frame, \
-    input_encoder_first_frame, metadata_dict, get_fname, get_folder_name, source_image_color_brightness_mean, \
-    source_image_color_brightness_std, source_image_hsv, source_image_lab, get_idx, get_id_of_source_image, get_id, \
-    get_utterances_of_source_image, get_video_path_of_source_image
+    input_encoder_first_frame, source_image_color_brightness_mean, \
+    source_image_color_brightness_std, source_image_hsv, source_image_lab, get_idx, get_id_of_source_image, \
+    get_video_path_of_source_image
 
 
 def check_custom_test():
@@ -49,18 +49,12 @@ def check_custom_test():
             # current_frame_vis = Image_change_last(current_frame)
             # first_frame_vis = Image_change_last(first_frame)
 
-            metadata = metadata_dict(idx, set)
-            utterances_of_source_image = get_utterances_of_source_image(idx, set)
             video_path_of_source_image = get_video_path_of_source_image(idx, set)
             id_of_source_image = get_id_of_source_image(idx, set)
             print(f'id_of_source_image: {id_of_source_image}')
             print(f'video_path_of_source_image: {video_path_of_source_image}')
-            print(f'utterances_of_source_image: {utterances_of_source_image}')
 
-            id = get_id(idx, set)
             idx_ = get_idx(idx, set)
-            video_path = get_fname(idx, set)
-            utterances = get_folder_name(idx, set)
             source_image_color_brightness_mean_ = source_image_color_brightness_mean(idx, set)
             source_image_color_brightness_std_ = source_image_color_brightness_std(idx, set)
             source_image_hsv_ = source_image_hsv(idx, set)

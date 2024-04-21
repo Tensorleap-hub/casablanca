@@ -16,10 +16,9 @@ def input_encoder_image(filename) -> np.ndarray:
     img = Image.open(filename).convert('RGB')
     img = img.resize((256, 256))
     img = np.asarray(img)
-    img = np.transpose(img, (2, 0, 1)) / 255.0
+    img = img / 255.0
     img = (img - 0.5) * 2.0
-    img = img[np.newaxis, ...]
-    return torch.tensor(img, dtype=torch.float32)
+    return img
 
 
 def input_video(fpath, frame_number) -> np.ndarray:
@@ -41,13 +40,9 @@ def input_encoder(path, frame_number):
     if fpath.rsplit('.', 1)[-1] == 'mp4':
         frame = input_video(fpath, frame_number)
         dir_path = fpath.rsplit('.', 1)[0] + '_' + str(frame_number) + '.png'
-        frame = rescale_min_max(frame.numpy())
-        frame = np.transpose(frame, (1, 2, 0))
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        cv2.imwrite(dir_path, frame_rgb)
+        frame = rescale_min_max(frame.numpy()).transpose((1, 2, 0))
+        cv2.imwrite(dir_path, frame)
     else:
-        frame = input_encoder_image(fpath).numpy()
-        frame = np.squeeze(frame, axis=0)
-        frame = np.transpose(frame, (1, 2, 0))
+        frame = input_encoder_image(fpath)
 
     return frame.astype(np.float32)

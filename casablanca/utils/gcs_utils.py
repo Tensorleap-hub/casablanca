@@ -47,7 +47,7 @@ def download(cloud_file_path: str, local_file_path: Optional[str] = None) -> str
     # if local_file_path is not specified saving in home dir
     if local_file_path is None:
         home_dir = os.getenv("HOME")
-        local_file_path = os.path.join(home_dir, "Tensorleap", "data", CONFIG['BUCKET_NAME'], cloud_file_path)
+        local_file_path = os.path.join(home_dir, "tensorleap", "data", CONFIG['BUCKET_NAME'], cloud_file_path)
 
     # check if file is already exists
     if os.path.exists(local_file_path):
