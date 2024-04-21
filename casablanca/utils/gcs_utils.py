@@ -41,3 +41,25 @@ def _download(cloud_file_path: str, local_file_path: Optional[str] = None) -> st
     blob = bucket.blob(cloud_file_path)
     blob.download_to_filename(local_file_path)
     return local_file_path
+
+
+def download(cloud_file_path: str, local_file_path: Optional[str] = None) -> str:
+    # if local_file_path is not specified saving in home dir
+    if local_file_path is None:
+        home_dir = os.getenv("HOME")
+        local_file_path = os.path.join(home_dir, "Tensorleap", "data", CONFIG['BUCKET_NAME'], cloud_file_path)
+
+    # check if file is already exists
+    if os.path.exists(local_file_path):
+        return local_file_path
+
+    bucket = _connect_to_gcs_and_return_bucket(CONFIG['BUCKET_NAME'])
+    dir_path = os.path.dirname(local_file_path)
+    os.makedirs(dir_path, exist_ok=True)
+    root, extension = os.path.splitext(cloud_file_path)
+    cloud_file_path = root + '.mp4'
+    blob = bucket.blob(cloud_file_path)
+    root, extension = os.path.splitext(local_file_path)
+    local_file_path = root + '.mp4'
+    blob.download_to_filename(local_file_path)
+    return local_file_path

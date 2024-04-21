@@ -10,6 +10,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torchvision.io import read_video
+import os
+from PIL import Image
 
 # Tensorleap imports
 from code_loader import leap_binder
@@ -17,7 +19,7 @@ from code_loader.contract.datasetclasses import PreprocessResponse
 from code_loader.contract.enums import LeapDataType, MetricDirection
 
 from casablanca.data.preprocess import load_data
-from casablanca.utils.gcs_utils import _download
+from casablanca.utils.gcs_utils import _download, download
 from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg, dummy_loss
 from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric
 from casablanca.utils.visuelizers import Image_change_last, grid_frames
@@ -37,18 +39,16 @@ def preprocess_func() -> List[PreprocessResponse]:
     return response
 
 
-# def input_encoder_source_image(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
-#     filename = preprocess.data['videos'][idx]
-#     img = Image.open(filename).convert('RGB')
-#     img = img.resize((256, 256))
-#     img = np.asarray(img)
-#     img = np.transpose(img, (2, 0, 1)) / 255.0
-#     img = (img - 0.5) * 2.0
-#     img = img[np.newaxis, ...]
-#     return torch.tensor(img, dtype=torch.float32)
+def input_encoder_image(filename) -> np.ndarray:
+    img = Image.open(filename).convert('RGB')
+    img = img.resize((256, 256))
+    img = np.asarray(img)
+    img = np.transpose(img, (2, 0, 1)) / 255.0
+    img = (img - 0.5) * 2.0
+    img = img[np.newaxis, ...]
+    return torch.tensor(img, dtype=torch.float32)
 
-def input_video(video_name, frame_number) -> np.ndarray:
-    fpath = _download(str(video_name))
+def input_video(fpath, frame_number) -> np.ndarray:
     vid_dict = read_video(fpath, pts_unit='sec')
     vid = vid_dict[0].permute(0, 3, 1, 2)
     if vid.shape[2] != 256:
@@ -91,14 +91,22 @@ def get_video_name(idx: int, preprocess: PreprocessResponse) -> str:
 
 
 def input_encoder_source_image(idx: int, preprocess: PreprocessResponse):
-    video_name = get_video_name(idx, preprocess)
-    print(f'video_name:{video_name}')
-    frame_number = 1
-    frame = input_video(video_name, frame_number)
-    frame = frame.numpy().astype(np.float32)
-    return np.transpose(frame, (1, 2, 0))
+    path = preprocess.data['path'][idx]
+    frame_number = 0
+    root, extension = os.path.splitext(path)
+    fpath = download(str(root + '.png'))
+    if fpath.rsplit('.', 1)[-1] == 'mp4':
+        frame = input_video(fpath, frame_number)
+        dir_path = fpath.rsplit('.', 1)[0] + '.png'
+        frame_uint8 = ((frame + 1.0) / 2.0 * 255.0).clamp(0, 255).to(torch.uint8)
+        frame_np = frame_uint8.permute(1, 2, 0).numpy()
+        cv2.imwrite(dir_path, frame_np)
+    else:
+        frame = input_encoder_image(fpath).numpy()
+        frame = np.squeeze(frame, axis=0)
+        frame = np.transpose(frame, (1, 2, 0))
 
-    # return frame.numpy().astype(np.float32)
+    return frame.astype(np.float32)
 
 
 def get_id_of_source_image(idx: int, preprocess: PreprocessResponse) -> str:
