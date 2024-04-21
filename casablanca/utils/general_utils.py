@@ -36,10 +36,10 @@ def input_video(fpath, frame_number) -> np.ndarray:
 
 def input_encoder(path, frame_number):
     root, extension = os.path.splitext(path)
-    fpath = download(str(root + '_' + str(frame_number) + '.png'))
+    fpath = download(str(root + '$' + str(frame_number) + '.png'))
     if fpath.rsplit('.', 1)[-1] == 'mp4':
         frame = input_video(fpath, frame_number)
-        dir_path = fpath.rsplit('.', 1)[0] + '_' + str(frame_number) + '.png'
+        dir_path = fpath.rsplit('.', 1)[0] + '$' + str(frame_number) + '.png'
         frame = rescale_min_max(frame.numpy()).transpose((1, 2, 0))
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         cv2.imwrite(dir_path, frame)

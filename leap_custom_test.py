@@ -20,18 +20,16 @@ def check_custom_test():
 
     dir_path = os.path.dirname(os.path.abspath(__file__))
     model_path = 'model/lia_encoder_decoder.onnx'
-    sess = onnxruntime.InferenceSession(os.path.join(dir_path, model_path))
+    # sess = onnxruntime.InferenceSession(os.path.join(dir_path, model_path))
 
-    input_name_1 = sess.get_inputs()[0].name
-    input_name_2 = sess.get_inputs()[1].name
-    input_name_3 = sess.get_inputs()[2].name
-    output_names = [output.name for output in sess.get_outputs()]
+    # input_name_1 = sess.get_inputs()[0].name
+    # input_name_2 = sess.get_inputs()[1].name
+    # input_name_3 = sess.get_inputs()[2].name
+    # output_names = [output.name for output in sess.get_outputs()]
 
     subsets = preprocess_func()
     for set in subsets:
-        print(f'set: {set}')
         for idx in range(set.length):
-            print(f'start idx: {idx}')
             first_frame = input_encoder_first_frame(idx, set)
             current_frame = input_encoder_current_frame(idx, set)
             source_image = input_encoder_source_image(idx, set)
