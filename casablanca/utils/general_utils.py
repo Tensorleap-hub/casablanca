@@ -42,7 +42,9 @@ def input_encoder(path, frame_number):
         frame = input_video(fpath, frame_number)
         dir_path = fpath.rsplit('.', 1)[0] + '_' + str(frame_number) + '.png'
         frame = rescale_min_max(frame.numpy())
-        cv2.imwrite(dir_path, np.transpose(frame, (1, 2, 0)))
+        frame = np.transpose(frame, (1, 2, 0))
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        cv2.imwrite(dir_path, frame_rgb)
     else:
         frame = input_encoder_image(fpath).numpy()
         frame = np.squeeze(frame, axis=0)
