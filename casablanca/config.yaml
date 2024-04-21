@@ -13,7 +13,6 @@ max_utterances_pre_id: 10
 
 dataset_creation:
   unique_ids: 20
-  frame_times: 10
   n_videos_per_id: 5
   n_clips_per_video: 1
   frames:

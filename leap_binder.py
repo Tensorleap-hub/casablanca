@@ -1,4 +1,3 @@
-
 from casablanca.utils.packages import install_all_packages
 
 # install_all_packages()
@@ -36,16 +35,6 @@ def preprocess_func() -> List[PreprocessResponse]:
     response = [train, val]
     return response
 
-
-# def input_encoder_source_image(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
-#     filename = preprocess.data['videos'][idx]
-#     img = Image.open(filename).convert('RGB')
-#     img = img.resize((256, 256))
-#     img = np.asarray(img)
-#     img = np.transpose(img, (2, 0, 1)) / 255.0
-#     img = (img - 0.5) * 2.0
-#     img = img[np.newaxis, ...]
-#     return torch.tensor(img, dtype=torch.float32)
 
 def input_video(video_name, frame_number) -> np.ndarray:
     fpath = _download(str(video_name))
