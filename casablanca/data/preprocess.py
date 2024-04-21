@@ -41,7 +41,8 @@ def load_data():
     repeated_df['vid_path'] = repeated_df['vid_name'].map(vid_to_path['path'])
 
     # assertions to make sure the data is as expected
-    n_occurrences_per_id_expected = config['n_videos_per_id'] * config['n_clips_per_video'] * len(selected_ids) * len(frames_indices)
+    n_occurrences_per_id_expected = config['n_videos_per_id'] * config['n_clips_per_video'] * len(selected_ids) * len(
+        frames_indices)
     n_occurrences_per_id_actual = repeated_df['source_id'].value_counts().unique()
     n_samples_expected = len(selected_ids) ** 2 * len(frames_indices) * config['n_clips_per_video'] * config[
         'n_videos_per_id']
