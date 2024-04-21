@@ -1,5 +1,5 @@
-PROJECT_ID: 'casablanca-dev-project'
-BUCKET_NAME: 'casablanca-datasets'
+PROJECT_ID: casablanca-dev-project
+BUCKET_NAME: casablanca-datasets
 
 data_filepath: data/files_mapping.tsv
 
