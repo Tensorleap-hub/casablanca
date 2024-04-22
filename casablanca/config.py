@@ -10,6 +10,8 @@ def load_od_config() -> Dict[str, Any]:
     with open(file_path, 'r') as file:
         config = yaml.safe_load(file)
 
+    config['local_storage_path'] = os.path.join(os.getenv("HOME"), "tensorleap", "data", config['BUCKET_NAME'])
+
     return config
 
 

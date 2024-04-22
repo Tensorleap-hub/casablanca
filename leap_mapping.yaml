@@ -151,9 +151,6 @@ decorators:
         - inputKey: src_image
           operation: Metric
           id: '2088'
-        - inputKey: data
-          operation: Visualizer
-          id: '2089'
         - inputKey: src_image
           operation: CustomLoss
           id: '2085'
@@ -232,22 +229,6 @@ decorators:
           name: permute_254
           id: '1'
       src_image:
-        - outputKey: gt_source_image
-          operation: GroundTruth
-          id: '2084'
-    outputs: {}
-  - operation: Visualizer
-    data:
-      type: Visualizer
-      visualizer_name: Image
-      visualizer_type: Image
-      arg_names:
-        - data
-      user_unique_name: Image
-      name: Image
-    id: '2089'
-    inputs:
-      data:
         - outputKey: gt_source_image
           operation: GroundTruth
           id: '2084'

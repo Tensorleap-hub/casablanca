@@ -17,13 +17,14 @@ from casablanca.utils.loss import dummy_loss
 from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric
 from casablanca.utils.visuelizers import Image_change_last, grid_frames
 from casablanca.config import CONFIG
-from casablanca.utils.general_utils import input_encoder
+from casablanca.utils.general_utils import input_encoder, download_all_vids, create_and_save_all_frames
 
 
 # Preprocess Function
 def preprocess_func() -> List[PreprocessResponse]:
     data = load_data()
-
+    # download_all_vids(data['vid_path'].unique().tolist())
+    create_and_save_all_frames(data)
     train_df = data.sample(frac=CONFIG['train_ratio'], random_state=42)
     val_df = data.drop(train_df.index)
 
