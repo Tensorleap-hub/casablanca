@@ -1,6 +1,7 @@
 
 from casablanca.utils.loss import turn_to_pytorch_tensor
 import lpips
+
 import tensorflow as tf
 
 def lpip_alex_metric(src_image, pred_image):
@@ -27,3 +28,17 @@ def lpip_vgg_metric(src_image, pred_image):
     result = result.numpy()
     result = tf.convert_to_tensor(result)
     return result[0, 0, 0]
+
+
+def l1(real_image: tf.Tensor, pred_image: tf.Tensor):
+    """ from papaer: L1 represents the mean absolute pixel difference between reconstructed and real videos.
+    - since our src image is cross-video ignore these results (valid for same-identity) (current frame and pre image)
+    - in our case, calculate also src image with pred image """
+
+    # Calculate the absolute differences
+    abs_difference = tf.abs(pred_image - real_image)
+
+    # Compute the mean over all pixels in the video
+    l1_loss = tf.reduce_mean(abs_difference, (1, 2, 3))
+    return l1_loss
+
