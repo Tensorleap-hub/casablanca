@@ -12,8 +12,16 @@ from casablanca.utils.gcs_utils import _download
 def _load_ids_metadata():
     fpath = CONFIG['metadata_filepath']
     df = pd.read_json(_download(fpath), orient='records')
-
     return df
+
+
+def list_indices():
+    config = CONFIG['dataset_creation']
+    # get frames from config
+    frames = config['frames']
+    # generate list of frames indices
+    frames_indices = list(range(frames['initial'], frames['final'] + 1, frames['step']))
+    return frames_indices
 
 
 def load_data():
@@ -21,10 +29,7 @@ def load_data():
     files_df = pd.read_csv(_download(CONFIG['data_filepath']), sep='\t')
     # get selected ids from config
     selected_ids = set(config['ids'])
-    # get frames from config
-    frames = config['frames']
-    # generate list of frames indices
-    frames_indices = list(range(frames['initial'], frames['final'] + 1, frames['step']))
+    frames_indices = list_indices()
     # filter files_df by selected ids
     files_df = files_df[files_df['id'].isin(selected_ids)]
     # select n_clips_per_video clips per video and n_videos_per_id videos per id

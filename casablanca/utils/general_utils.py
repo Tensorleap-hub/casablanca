@@ -28,9 +28,9 @@ def input_video(fpath, frame_number) -> np.ndarray:
     if vid.shape[2] != 256:
         vid = nn.functional.interpolate(vid.to(dtype=torch.float32), size=(256, 256), mode='bilinear',
                                         align_corners=False)
-    vid = vid.unsqueeze(0)
+    # vid = vid.unsqueeze(0)
     vid_norm = (vid / 255.0 - 0.5) * 2.0
-    vid_norm = vid_norm[0]
+    # vid_norm = vid_norm[0]
 
     return vid_norm[frame_number]
 
