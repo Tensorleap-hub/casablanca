@@ -2,7 +2,7 @@ PROJECT_ID: casablanca-dev-project
 BUCKET_NAME: casablanca-datasets
 
 data_filepath: data/files_mapping.tsv
-
+metadata_filepath: data/ids_metadata.json
 
 train_ratio: 0.7
 
