@@ -1,3 +1,5 @@
+import os.path
+
 import numpy as np
 from itertools import product
 import pandas as pd
@@ -5,6 +7,13 @@ import pandas as pd
 # Tensorleap imports
 from casablanca.config import CONFIG
 from casablanca.utils.gcs_utils import _download
+
+
+def _load_ids_metadata():
+    fpath = CONFIG['metadata_filepath']
+    df = pd.read_json(_download(fpath), orient='records')
+
+    return df
 
 
 def load_data():
@@ -23,6 +32,7 @@ def load_data():
         'id').head(config['n_videos_per_id'])
     # create mapping from person id to path
     id_to_path = files_df[['id', 'path']].drop_duplicates().groupby('id').head(1).set_index('id')
+    path_to_id = files_df[['id', 'path']].set_index('path')
     # create mapping from video id to path
     vid_to_path = files_df[['vid_name', 'path']].drop_duplicates().set_index('vid_name')
     # create mapping from person id to video id
@@ -39,6 +49,7 @@ def load_data():
     repeated_df['frame_id'] = np.tile(frames_indices, len(all_combinations))
     repeated_df['source_path'] = repeated_df['source_id'].map(id_to_path['path'])
     repeated_df['vid_path'] = repeated_df['vid_name'].map(vid_to_path['path'])
+    repeated_df['vid_id'] = repeated_df['vid_path'].map(path_to_id['id'])
 
     # assertions to make sure the data is as expected
     n_occurrences_per_id_expected = config['n_videos_per_id'] * config['n_clips_per_video'] * len(selected_ids) * len(
@@ -55,4 +66,7 @@ def load_data():
         raise ValueError('The number of samples is not as expected'
                          f'Expected: {n_samples_expected} got {repeated_df.shape[0]}')
 
+    ids_metadata = _load_ids_metadata().set_index("id")
+    repeated_df['source_gender'] = repeated_df['source_id'].map(ids_metadata['gender'])
+    repeated_df['vid_gender'] = repeated_df['vid_id'].map(ids_metadata['gender'])
     return repeated_df
