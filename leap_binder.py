@@ -14,7 +14,7 @@ from code_loader.contract.enums import LeapDataType, MetricDirection
 
 from casablanca.data.preprocess import load_data
 from casablanca.utils.loss import dummy_loss
-from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric
+from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric, l1
 from casablanca.utils.visuelizers import Image_change_last, grid_frames
 from casablanca.config import CONFIG
 from casablanca.utils.general_utils import input_encoder
@@ -53,68 +53,27 @@ def input_encoder_first_frame(idx: int, preprocess: PreprocessResponse) -> np.nd
 
 
 # ----------------metadata----------------------
-def get_video_name(idx: int, preprocess: PreprocessResponse) -> str:
-    return preprocess.data['vid_name'].iloc[idx]
 
-
-def get_id_of_source_image(idx: int, preprocess: PreprocessResponse) -> str:
-    return preprocess.data['source_id'].iloc[idx]
-
-
-def get_frame_index(idx: int, preprocess: PreprocessResponse) -> str:
-    return preprocess.data['frame_id'].iloc[idx]
-
-
-def get_video_path_of_source_image(idx: int, preprocess: PreprocessResponse) -> str:
-    return preprocess.data['source_path'].iloc[idx]
-
-
-def get_video_path_of_current_frame(idx: int, preprocess: PreprocessResponse) -> str:
-    return preprocess.data['vid_path'].iloc[idx]
-
-
-def get_source_vid_combination_id(idx: int, preprocess: PreprocessResponse) -> str:
-    return f"{preprocess.data['source_id'].iloc[idx]}_{preprocess.data['vid_name'].iloc[idx]}"
-
-
-def get_vid_frame_combination_id(idx: int, preprocess: PreprocessResponse) -> str:
-    return f"{preprocess.data['vid_name'].iloc[idx]}_{preprocess.data['frame_id'].iloc[idx]}"
-
-
-def get_idx(idx: int, preprocess: PreprocessResponse) -> int:
-    return idx
-
-
-def source_image_brightness(frame) -> float:
-    return float(np.mean(frame))
-
-
-def source_image_color_brightness_mean(idx: int, preprocess: PreprocessResponse) -> dict:
-    frame = input_encoder_source_image(idx, preprocess)
-    r, g, b = cv2.split(frame)
-    res = {"red": float(r.mean()), "green": float(g.mean()), "blue": float(b.mean())}
-
-    return res
-
-
-def source_image_color_brightness_std(idx: int, preprocess: PreprocessResponse) -> dict:
-    frame = input_encoder_source_image(idx, preprocess)
-    r, g, b = cv2.split(frame)
-    res = {"red": float(r.std()), "green": float(g.std()), "blue": float(b.std())}
-
-    return res
+def calc_metadata_vals(idx: int, preprocess: PreprocessResponse) -> dict:
+    res_dic = {}
+    res_dic["idx"] = idx
+    keys = ['source_id', 'vid_id', 'source_path', 'vid_path', 'vid_name', 'frame_id', 'source_gender', 'vid_gender']
+    for k in keys:
+        res_dic[k] = preprocess.data[k].iloc[idx]
+    res_dic['frame_id'] = int(res_dic['frame_id'])
+    res_dic['vid_frame_combination_id'] = f"{preprocess.data['vid_name'].iloc[idx]}_{preprocess.data['frame_id'].iloc[idx]}"
+    res_dic['source_vid_combination_id'] = f"{preprocess.data['source_id'].iloc[idx]}_{preprocess.data['vid_name'].iloc[idx]}"
+    return res_dic
 
 
 def source_image_contrast(frame) -> float:
     img_lab = cv2.cvtColor(frame, cv2.COLOR_RGB2LAB)
     l, a, b = cv2.split(img_lab)
     df = abs(a - b)
-
     return float(np.mean(df))
 
 
-def source_image_hsv(idx: int, preprocess: PreprocessResponse) -> Dict[str, float]:
-    frame = input_encoder_source_image(idx, preprocess)
+def source_image_hsv(frame) -> dict:
     hsv_image = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
     hue_range = np.ptp(hsv_image[:, :, 0])
     saturation_level = np.mean(hsv_image[:, :, 1])
@@ -124,15 +83,43 @@ def source_image_hsv(idx: int, preprocess: PreprocessResponse) -> Dict[str, floa
     return res
 
 
-def source_image_lab(idx: int, preprocess: PreprocessResponse) -> Dict[str, float]:
-    frame = input_encoder_source_image(idx, preprocess)
+def source_image_lab(frame) -> dict:
     lab_image = cv2.cvtColor(frame, cv2.COLOR_RGB2LAB)
     lightness_mean = np.mean(lab_image[:, :, 0])
     a_mean = np.mean(lab_image[:, :, 1])
     b_mean = np.mean(lab_image[:, :, 2])
     res = {'lightness_mean': float(lightness_mean), 'a_mean': float(a_mean), 'b_mean': float(b_mean)}
-
     return res
+
+
+def calc_metadata_stats_func(key: str):
+
+    def calc_metadata_stats(idx: int, preprocess: PreprocessResponse) -> dict:
+        res_dic = {}
+        if key == "source_image":
+            frame = input_encoder_source_image(idx, preprocess)
+
+        elif key == 'current_frame':
+            frame = input_encoder_current_frame(idx, preprocess)
+
+        else:
+            raise Exception("not supported key for input metadata calculations!")
+
+        r, g, b = cv2.split(frame)
+        res_dic.update({"red_mean": float(r.mean()), "green_mean": float(g.mean()), "blue_mean": float(b.mean())})
+        res_dic.update({"red_std": float(r.std()), "green_std": float(g.std()), "blue_std": float(b.std())})
+        res_dic['brightness'] = float(np.mean(frame))
+
+        res = source_image_hsv(frame)
+        res_dic.update(res)
+        res = source_image_lab(frame)
+        res_dic.update(res)
+
+        res_dic['contrast'] = source_image_contrast(frame)
+        return res_dic
+
+    return calc_metadata_stats
+
 
 
 leap_binder.set_preprocess(function=preprocess_func)
@@ -143,24 +130,16 @@ leap_binder.set_input(function=input_encoder_first_frame, name='first_frame')
 
 leap_binder.set_ground_truth(input_encoder_source_image, 'gt_source_image')
 
-leap_binder.set_metadata(get_idx, name='idx')
-leap_binder.set_metadata(get_video_name, name='video_name')
-leap_binder.set_metadata(get_id_of_source_image, name='source_id')
-leap_binder.set_metadata(get_frame_index, name='frame_index')
-leap_binder.set_metadata(get_video_path_of_source_image, name='video_path_of_source_image')
-leap_binder.set_metadata(get_video_path_of_current_frame, name='video_path_of_current_frame')
-leap_binder.set_metadata(get_source_vid_combination_id, name='source_vid_combination_id')
-leap_binder.set_metadata(get_vid_frame_combination_id, name='vid_frame_combination_id')
-leap_binder.set_metadata(source_image_color_brightness_mean, name='source_image_color_brightness_mean')
-leap_binder.set_metadata(source_image_color_brightness_std, name='source_image_color_brightness_std')
-leap_binder.set_metadata(source_image_hsv, name='source_image_hsv')
-leap_binder.set_metadata(source_image_lab, name='source_image_lab')
+leap_binder.set_metadata(calc_metadata_vals, name='metadata')
+leap_binder.set_metadata(calc_metadata_stats_func('source_image'), name='source_image')
+leap_binder.set_metadata(calc_metadata_stats_func('current_frame'), name='current_frame')
 
 leap_binder.set_visualizer(Image_change_last, 'Image_change_last', LeapDataType.Image)
 leap_binder.set_visualizer(grid_frames, 'grid_frames', LeapDataType.Image)
 
-leap_binder.add_custom_metric(lpip_alex_metric, 'lpip_alex', direction=MetricDirection.Upward)
-leap_binder.add_custom_metric(lpip_vgg_metric, 'lpip_vgg', direction=MetricDirection.Upward)
+leap_binder.add_custom_metric(lpip_alex_metric, 'lpip_alex', direction=MetricDirection.Downward)
+leap_binder.add_custom_metric(lpip_vgg_metric, 'lpip_vgg', direction=MetricDirection.Downward)
+leap_binder.add_custom_metric(l1, 'l1', direction=MetricDirection.Downward)
 leap_binder.add_custom_loss(dummy_loss, 'dummy_loss')
 
 if __name__ == '__main__':

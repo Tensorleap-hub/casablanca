@@ -8,5 +8,6 @@ include:
     - casablanca/config.py
     - casablanca/config.yaml
     - casablanca/utils/*.py
+    - casablanca/data/ids_metadata.json
     - casablanca/data/*.py
     - casablanca/losses.py
