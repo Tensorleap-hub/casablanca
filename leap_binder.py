@@ -15,7 +15,7 @@ from code_loader.contract.enums import LeapDataType, MetricDirection
 from casablanca.data.preprocess import load_data
 from casablanca.utils.loss import dummy_loss
 from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric, l1
-from casablanca.utils.visuelizers import Image_change_last, grid_frames
+from casablanca.utils.visuelizers import Image_change_last, grid_frames, grid_all
 from casablanca.config import CONFIG
 from casablanca.utils.general_utils import input_encoder
 
@@ -63,6 +63,7 @@ def calc_metadata_vals(idx: int, preprocess: PreprocessResponse) -> dict:
     res_dic['frame_id'] = int(res_dic['frame_id'])
     res_dic['vid_frame_combination_id'] = f"{preprocess.data['vid_name'].iloc[idx]}_{preprocess.data['frame_id'].iloc[idx]}"
     res_dic['source_vid_combination_id'] = f"{preprocess.data['source_id'].iloc[idx]}_{preprocess.data['vid_name'].iloc[idx]}"
+    res_dic['same_id_source_vid'] = int(preprocess.data["source_id"].iloc[idx] == preprocess.data["vid_id"].iloc[idx])
     return res_dic
 
 
@@ -136,6 +137,8 @@ leap_binder.set_metadata(calc_metadata_stats_func('current_frame'), name='curren
 
 leap_binder.set_visualizer(Image_change_last, 'Image_change_last', LeapDataType.Image)
 leap_binder.set_visualizer(grid_frames, 'grid_frames', LeapDataType.Image)
+leap_binder.set_visualizer(grid_all, 'grid_all', LeapDataType.Image)
+
 
 leap_binder.add_custom_metric(lpip_alex_metric, 'lpip_alex', direction=MetricDirection.Downward)
 leap_binder.add_custom_metric(lpip_vgg_metric, 'lpip_vgg', direction=MetricDirection.Downward)
