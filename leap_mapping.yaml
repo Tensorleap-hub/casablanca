@@ -14,6 +14,18 @@ decorators:
         - inputKey: data
           operation: Visualizer
           id: '2079'
+        - inputKey: pred_image
+          operation: Metric
+          id: '2090'
+        - inputKey: src_image
+          operation: Metric
+          id: '2092'
+        - inputKey: src_image
+          operation: Metric
+          id: '2093'
+        - inputKey: source_image
+          operation: Visualizer
+          id: '2094'
   - operation: Input
     data:
       type: Input
@@ -32,6 +44,18 @@ decorators:
         - inputKey: current_frame
           operation: Visualizer
           id: '2082'
+        - inputKey: real_image
+          operation: Metric
+          id: '2090'
+        - inputKey: pred_image
+          operation: Metric
+          id: '2093'
+        - inputKey: pred_image
+          operation: Metric
+          id: '2092'
+        - inputKey: current_frame
+          operation: Visualizer
+          id: '2094'
   - operation: Input
     data:
       type: Input
@@ -49,7 +73,10 @@ decorators:
           id: '2082'
         - inputKey: data
           operation: Visualizer
-          id: '2081'
+          id: '2091'
+        - inputKey: first_frame
+          operation: Visualizer
+          id: '2094'
   - operation: Visualizer
     data:
       type: Visualizer
@@ -81,22 +108,6 @@ decorators:
         - outputKey: current_frame
           operation: Input
           id: '768'
-    outputs: {}
-  - operation: Visualizer
-    data:
-      type: Visualizer
-      name: Image
-      visualizer_name: Image
-      visualizer_type: Image
-      arg_names:
-        - data
-      user_unique_name: first_frame
-    id: '2081'
-    inputs:
-      data:
-        - outputKey: first_frame
-          operation: Input
-          id: '1017'
     outputs: {}
   - operation: Visualizer
     data:
@@ -151,8 +162,8 @@ decorators:
         - inputKey: src_image
           operation: Metric
           id: '2088'
-        - inputKey: data
-          operation: Visualizer
+        - inputKey: real_image
+          operation: Metric
           id: '2089'
         - inputKey: src_image
           operation: CustomLoss
@@ -236,20 +247,133 @@ decorators:
           operation: GroundTruth
           id: '2084'
     outputs: {}
+  - operation: Metric
+    data:
+      type: Metric
+      name: l1
+      metric_name: l1
+      arg_names:
+        - real_image
+        - pred_image
+      user_unique_name: l1_SourceImg_PredImg
+    id: '2089'
+    inputs:
+      pred_image:
+        - outputKey: feature_map
+          operation: Permute
+          name: permute_254
+          id: '1'
+      real_image:
+        - outputKey: gt_source_image
+          operation: GroundTruth
+          id: '2084'
+    outputs: {}
+  - operation: Metric
+    data:
+      type: Metric
+      name: l1
+      metric_name: l1
+      arg_names:
+        - real_image
+        - pred_image
+      user_unique_name: l1_SourceImg_CurrFrame
+    id: '2090'
+    inputs:
+      pred_image:
+        - outputKey: source_image
+          operation: Input
+          id: '518'
+      real_image:
+        - outputKey: current_frame
+          operation: Input
+          id: '768'
+    outputs: {}
   - operation: Visualizer
     data:
       type: Visualizer
+      name: Image
       visualizer_name: Image
       visualizer_type: Image
       arg_names:
         - data
-      user_unique_name: Image
-      name: Image
-    id: '2089'
+      user_unique_name: first_frame
+    id: '2091'
     inputs:
       data:
-        - outputKey: gt_source_image
-          operation: GroundTruth
-          id: '2084'
+        - outputKey: first_frame
+          operation: Input
+          id: '1017'
+    outputs: {}
+  - operation: Metric
+    data:
+      type: Metric
+      name: lpip_alex
+      metric_name: lpip_alex
+      arg_names:
+        - src_image
+        - pred_image
+      user_unique_name: lpip_alex_SrcToDrivingImg
+    id: '2092'
+    inputs:
+      src_image:
+        - outputKey: source_image
+          operation: Input
+          id: '518'
+      pred_image:
+        - outputKey: current_frame
+          operation: Input
+          id: '768'
+    outputs: {}
+  - operation: Metric
+    data:
+      type: Metric
+      name: lpip_vgg
+      metric_name: lpip_vgg
+      arg_names:
+        - src_image
+        - pred_image
+      user_unique_name: lpip_vgg_SrcToDrivingImg
+    id: '2093'
+    inputs:
+      src_image:
+        - outputKey: source_image
+          operation: Input
+          id: '518'
+      pred_image:
+        - outputKey: current_frame
+          operation: Input
+          id: '768'
+    outputs: {}
+  - operation: Visualizer
+    data:
+      type: Visualizer
+      name: grid_all
+      visualizer_name: grid_all
+      visualizer_type: Image
+      arg_names:
+        - first_frame
+        - current_frame
+        - source_image
+        - pred_image
+      user_unique_name: grid_all
+    id: '2094'
+    inputs:
+      pred_image:
+        - outputKey: feature_map
+          operation: Permute
+          name: permute_254
+          id: '1'
+      source_image:
+        - outputKey: source_image
+          operation: Input
+          id: '518'
+      current_frame:
+        - outputKey: current_frame
+          operation: Input
+          id: '768'
+      first_frame:
+        - outputKey: first_frame
+          operation: Input
+          id: '1017'
     outputs: {}
 layers: []

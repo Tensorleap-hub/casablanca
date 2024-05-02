@@ -1,8 +1,8 @@
-
 from casablanca.utils.loss import turn_to_pytorch_tensor
 import lpips
 
 import tensorflow as tf
+
 
 def lpip_alex_metric(src_image, pred_image):
     src_image = turn_to_pytorch_tensor(src_image)
@@ -41,4 +41,3 @@ def l1(real_image: tf.Tensor, pred_image: tf.Tensor):
     # Compute the mean over all pixels in the video
     l1_loss = tf.reduce_mean(abs_difference, (1, 2, 3))
     return l1_loss
-
