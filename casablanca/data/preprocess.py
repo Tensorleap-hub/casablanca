@@ -26,7 +26,7 @@ def list_indices():
 
 def load_data():
     config = CONFIG['dataset_creation']
-    files_df = pd.read_csv(_download(CONFIG['data_filepath']), sep='\t')
+    files_df = pd.read_csv(_download(CONFIG['data_filepath'], overwrite=True), sep='\t')
     # get selected ids from config
     selected_ids = set(config['ids'])
     frames_indices = list_indices()
@@ -56,6 +56,14 @@ def load_data():
     repeated_df['vid_path'] = repeated_df['vid_name'].map(vid_to_path['path'])
     repeated_df['vid_id'] = repeated_df['vid_path'].map(path_to_id['id'])
 
+    # add frame path column
+    repeated_df['frame_path'] = repeated_df.apply(
+        lambda row: f"{os.path.splitext(row['vid_path'])[0]}{CONFIG['frame_separator']}{row['frame_id']}.png", axis=1)
+    # add gender metadata
+    ids_metadata = _load_ids_metadata().set_index("id")
+    repeated_df['source_gender'] = repeated_df['source_id'].map(ids_metadata['gender'])
+    repeated_df['vid_gender'] = repeated_df['vid_id'].map(ids_metadata['gender'])
+
     # assertions to make sure the data is as expected
     n_occurrences_per_id_expected = config['n_videos_per_id'] * config['n_clips_per_video'] * len(selected_ids) * len(
         frames_indices)
@@ -71,7 +79,4 @@ def load_data():
         raise ValueError('The number of samples is not as expected'
                          f'Expected: {n_samples_expected} got {repeated_df.shape[0]}')
 
-    ids_metadata = _load_ids_metadata().set_index("id")
-    repeated_df['source_gender'] = repeated_df['source_id'].map(ids_metadata['gender'])
-    repeated_df['vid_gender'] = repeated_df['vid_id'].map(ids_metadata['gender'])
     return repeated_df

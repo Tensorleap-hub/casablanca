@@ -1,11 +1,11 @@
+from casablanca.data.save_frames_to_gcs import save_frames_to_gcs
 from casablanca.utils.packages import install_all_packages
 
-install_all_packages()
+# install_all_packages()
 
 from typing import List, Dict
 import cv2
 import numpy as np
-
 
 # Tensorleap imports
 from code_loader import leap_binder
@@ -22,7 +22,7 @@ from casablanca.utils.general_utils import input_encoder
 
 # Preprocess Function
 def preprocess_func() -> List[PreprocessResponse]:
-    data = load_data()
+    data = save_frames_to_gcs()
 
     train_df = data.sample(frac=CONFIG['train_ratio'], random_state=42)
     val_df = data.drop(train_df.index)
@@ -61,8 +61,10 @@ def calc_metadata_vals(idx: int, preprocess: PreprocessResponse) -> dict:
     for k in keys:
         res_dic[k] = preprocess.data[k].iloc[idx]
     res_dic['frame_id'] = int(res_dic['frame_id'])
-    res_dic['vid_frame_combination_id'] = f"{preprocess.data['vid_name'].iloc[idx]}_{preprocess.data['frame_id'].iloc[idx]}"
-    res_dic['source_vid_combination_id'] = f"{preprocess.data['source_id'].iloc[idx]}_{preprocess.data['vid_name'].iloc[idx]}"
+    res_dic[
+        'vid_frame_combination_id'] = f"{preprocess.data['vid_name'].iloc[idx]}_{preprocess.data['frame_id'].iloc[idx]}"
+    res_dic[
+        'source_vid_combination_id'] = f"{preprocess.data['source_id'].iloc[idx]}_{preprocess.data['vid_name'].iloc[idx]}"
     res_dic['same_id_source_vid'] = int(preprocess.data["source_id"].iloc[idx] == preprocess.data["vid_id"].iloc[idx])
     return res_dic
 
@@ -94,7 +96,6 @@ def source_image_lab(frame) -> dict:
 
 
 def calc_metadata_stats_func(key: str):
-
     def calc_metadata_stats(idx: int, preprocess: PreprocessResponse) -> dict:
         res_dic = {}
         if key == "source_image":
@@ -122,7 +123,6 @@ def calc_metadata_stats_func(key: str):
     return calc_metadata_stats
 
 
-
 leap_binder.set_preprocess(function=preprocess_func)
 
 leap_binder.set_input(function=input_encoder_source_image, name='source_image')
@@ -138,7 +138,6 @@ leap_binder.set_metadata(calc_metadata_stats_func('current_frame'), name='curren
 leap_binder.set_visualizer(Image_change_last, 'Image_change_last', LeapDataType.Image)
 leap_binder.set_visualizer(grid_frames, 'grid_frames', LeapDataType.Image)
 leap_binder.set_visualizer(grid_all, 'grid_all', LeapDataType.Image)
-
 
 leap_binder.add_custom_metric(lpip_alex_metric, 'lpip_alex', direction=MetricDirection.Downward)
 leap_binder.add_custom_metric(lpip_vgg_metric, 'lpip_vgg', direction=MetricDirection.Downward)
