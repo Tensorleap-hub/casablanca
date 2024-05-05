@@ -7,7 +7,7 @@ import tensorflow as tf
 
 from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg, dummy_loss
 from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric, l1
-from casablanca.utils.visuelizers import Image_change_last, grid_frames
+from casablanca.utils.visuelizers import image_change_last, grid_frames
 from leap_binder import input_encoder_source_image, preprocess_func, input_encoder_current_frame, \
     input_encoder_first_frame, calc_metadata_vals, calc_metadata_stats_func
 
@@ -53,10 +53,10 @@ def check_custom_test():
             print(f'lpip_vgg_metric time: {round(t1 - t0, 3)}')
             dummy_loss_ = dummy_loss(np.expand_dims(source_image, 0), np.expand_dims(source_image, 0))
 
-            # grid_frames_ = grid_frames(first_frame, current_frame)
-            # source_image_vis = Image_change_last(source_image)
-            # current_frame_vis = Image_change_last(current_frame)
-            # first_frame_vis = Image_change_last(first_frame)
+            grid_frames_ = grid_frames(first_frame, current_frame)
+            source_image_vis = image_change_last(source_image)
+            current_frame_vis = image_change_last(current_frame)
+            first_frame_vis = image_change_last(first_frame)
             res = calc_metadata_vals(idx, set)
             video_path_of_source_image = res['vid_path']
             id_of_source_image = res['source_id']

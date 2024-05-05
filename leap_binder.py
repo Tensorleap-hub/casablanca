@@ -15,7 +15,7 @@ from code_loader.contract.enums import LeapDataType, MetricDirection
 from casablanca.data.preprocess import load_data
 from casablanca.utils.loss import dummy_loss
 from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric, l1
-from casablanca.utils.visuelizers import Image_change_last, grid_frames, grid_all
+from casablanca.utils.visuelizers import image_change_last, grid_frames, grid_all
 from casablanca.config import CONFIG
 from casablanca.utils.general_utils import input_encoder
 
@@ -135,7 +135,7 @@ leap_binder.set_metadata(calc_metadata_vals, name='metadata')
 leap_binder.set_metadata(calc_metadata_stats_func('source_image'), name='source_image')
 leap_binder.set_metadata(calc_metadata_stats_func('current_frame'), name='current_frame')
 
-leap_binder.set_visualizer(Image_change_last, 'Image_change_last', LeapDataType.Image)
+leap_binder.set_visualizer(image_change_last, 'Image_change_last', LeapDataType.Image)
 leap_binder.set_visualizer(grid_frames, 'grid_frames', LeapDataType.Image)
 leap_binder.set_visualizer(grid_all, 'grid_all', LeapDataType.Image)
 
