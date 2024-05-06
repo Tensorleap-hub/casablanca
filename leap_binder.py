@@ -65,7 +65,13 @@ def calc_metadata_vals(idx: int, preprocess: PreprocessResponse) -> dict:
         'vid_frame_combination_id'] = f"{preprocess.data['vid_name'].iloc[idx]}_{preprocess.data['frame_id'].iloc[idx]}"
     res_dic[
         'source_vid_combination_id'] = f"{preprocess.data['source_id'].iloc[idx]}_{preprocess.data['vid_name'].iloc[idx]}"
-    res_dic['same_id_source_vid'] = int(preprocess.data["source_id"].iloc[idx] == preprocess.data["vid_id"].iloc[idx])
+    res_dic['diff_id_source_vid'] = int(preprocess.data["source_id"].iloc[idx] != preprocess.data["vid_id"].iloc[idx])
+    vid_path = (preprocess.data["vid_path"].iloc[idx]).split('/')
+    vid_path = '/'.join(vid_path[3:5])
+    source_path = (preprocess.data["source_path"].iloc[idx]).split('/')
+    source_path = '/'.join(source_path[3:5])
+    res_dic['same_id_and_vid_source_vid'] = int(vid_path == source_path)
+    res_dic['same_id_diff_vid_source_vid'] = int((vid_path != source_path) and (preprocess.data["source_id"].iloc[idx] == preprocess.data["vid_id"].iloc[idx]))
     return res_dic
 
 
