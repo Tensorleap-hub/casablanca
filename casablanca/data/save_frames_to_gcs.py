@@ -7,7 +7,7 @@ from code_loader.utils import rescale_min_max
 from concurrent.futures import ThreadPoolExecutor
 
 from casablanca.config import CONFIG
-from casablanca.data.preprocess import load_data
+from casablanca.data.preprocess import load_data, load_data_all
 from casablanca.utils.gcs_utils import _download, _connect_to_gcs_and_return_bucket, check_gcs_files_existence
 from casablanca.utils.general_utils import input_video
 
@@ -36,14 +36,15 @@ def process_frame(frame_index, local_video_path, bucket):
 
 
 def save_frames_to_gcs() -> pd.DataFrame:
-    data = load_data()
+    data = load_data_all()
+    # data = load_data()
     frame_paths = set(data['frame_path'])
-    frame_zero_paths = set(data['frame_path'].apply(lambda x: x.split(CONFIG['frame_separator'])[0] + CONFIG['frame_separator'] + '0.png'))
-    all_frames_paths = list(frame_paths.union(frame_zero_paths))
+    # frame_zero_paths = set(data['frame_path'].apply(lambda x: x.split(CONFIG['frame_separator'])[0] + CONFIG['frame_separator'] + '0.png'))
+    # all_frames_paths = list(frame_paths.union(frame_zero_paths))
     t0 = time.time()
-    results = check_gcs_files_existence(all_frames_paths)
+    results = check_gcs_files_existence(list(frame_paths))
     t1 = time.time()
-    print(f"Checked existence of {len(all_frames_paths)} frames in {t1 - t0} seconds")
+    print(f"Checked existence of {len(frame_paths)} frames in {t1 - t0} seconds")
     res_df = pd.DataFrame(results, columns=['path', 'exists'])
     missing_frames = res_df[~res_df['exists']]
     vid_paths = [(x.split(CONFIG['frame_separator'])[0] + '.mp4',

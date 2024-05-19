@@ -31,7 +31,7 @@ def lpip_vgg_metric(src_image, pred_image):
 
 
 def l1(real_image: tf.Tensor, pred_image: tf.Tensor):
-    """ from papaer: L1 represents the mean absolute pixel difference between reconstructed and real videos.
+    """ from paper: L1 represents the mean absolute pixel difference between reconstructed and real videos.
     - since our src image is cross-video ignore these results (valid for same-identity) (current frame and pre image)
     - in our case, calculate also src image with pred image """
 
