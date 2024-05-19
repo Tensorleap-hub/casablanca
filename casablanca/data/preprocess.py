@@ -80,3 +80,16 @@ def load_data():
                          f'Expected: {n_samples_expected} got {repeated_df.shape[0]}')
 
     return repeated_df
+
+
+def load_data_all():
+    files_df = pd.read_csv(_download(CONFIG['data_filepath'], overwrite=True), sep='\t')
+    frames_indices = list_indices()
+    repeated_df = files_df.loc[files_df.index.repeat(len(frames_indices))].reset_index(drop=True)
+    repeated_frames = np.tile(frames_indices, len(files_df))
+    repeated_df['frame_id'] = repeated_frames
+    repeated_df['frame_path'] = repeated_df.apply(
+        lambda row: f"{os.path.splitext(row['path'])[0]}{CONFIG['frame_separator']}{row['frame_id']}.png", axis=1)
+
+    return repeated_df
+
