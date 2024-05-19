@@ -5,11 +5,21 @@ import onnxruntime
 import numpy as np
 import tensorflow as tf
 
+from casablanca.utils.general_utils import input_encoder
 from casablanca.utils.loss import lpip_loss_alex, lpip_loss_vgg, dummy_loss
 from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric, l1
 from casablanca.utils.visuelizers import image_change_last, grid_frames
 from leap_binder import input_encoder_source_image, preprocess_func, input_encoder_current_frame, \
     input_encoder_first_frame, calc_metadata_vals, calc_metadata_stats_func
+
+import cv2
+from PIL import Image
+
+def output_decoder_image(img_array: np.ndarray) -> Image:
+    img_array = (img_array / 2.0) + 0.5
+    img_array = np.clip(img_array, 0, 1)
+    img_array = (img_array * 255.0).astype(np.uint8)
+    return img_array
 
 
 def check_custom_test():
@@ -30,6 +40,10 @@ def check_custom_test():
     subsets = preprocess_func()
     for set in subsets:
         for idx in range(set.length):
+            source_id = set.data['source_id'].iloc[idx]
+            vid_id = set.data['vid_id'].iloc[idx]
+            print(f'source id: {source_id}')
+            print(f'vid id: {vid_id}')
             first_frame = input_encoder_first_frame(idx, set)
             current_frame = input_encoder_current_frame(idx, set)
             source_image = input_encoder_source_image(idx, set)
