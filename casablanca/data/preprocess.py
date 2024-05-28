@@ -84,7 +84,8 @@ def load_data():
 
 def load_data_all():
     files_df = pd.read_csv(_download(CONFIG['data_filepath'], overwrite=True), sep='\t')
-    frames_indices = list_indices()
+    # frames_indices = list_indices()
+    frames_indices = CONFIG['dataset_settings']['more_frames']['frames_indices']
     repeated_df = files_df.loc[files_df.index.repeat(len(frames_indices))].reset_index(drop=True)
     repeated_frames = np.tile(frames_indices, len(files_df))
     repeated_df['frame_id'] = repeated_frames
