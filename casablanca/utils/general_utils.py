@@ -26,6 +26,8 @@ def input_encoder_image(filename) -> np.ndarray:
 
 def input_video(fpath, frame_number) -> np.ndarray:
     vid_dict = read_video(fpath, pts_unit='sec')
+    if vid_dict[0].shape[0] < frame_number:
+        frame_number = vid_dict[0].shape[0] -1
     while vid_dict[0].shape[0] < frame_number:
         time.sleep(2)
         print(f'reloading video {fpath}')
