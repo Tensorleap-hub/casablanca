@@ -28,21 +28,23 @@ def process_frame(frame_index, local_video_path, bucket):
 
     # Check if image already exists on GCS
     blob = bucket.blob(image_filename)
-    if not blob.exists():  # Only upload if the blob does not exist
-        blob.upload_from_filename(local_image_path)
+    blob.upload_from_filename(local_image_path)
+    # if not blob.exists():  # Only upload if the blob does not exist
+    #     blob.upload_from_filename(local_image_path)
 
     # Clean up local files
-    os.remove(local_image_path)
+    if os.path.exists(local_image_path):
+        os.remove(local_image_path)
 
 
-def save_frames_to_gcs() -> pd.DataFrame:
-    data = load_data_all()
+def save_frames_to_gcs(data) -> pd.DataFrame:
+    # data = load_data_all()
     # data = load_data()
     frame_paths = set(data['frame_path'])
-    # frame_zero_paths = set(data['frame_path'].apply(lambda x: x.split(CONFIG['frame_separator'])[0] + CONFIG['frame_separator'] + '0.png'))
-    # all_frames_paths = list(frame_paths.union(frame_zero_paths))
+    frame_zero_paths = set(data['frame_path'].apply(lambda x: x.split(CONFIG['frame_separator'])[0] + CONFIG['frame_separator'] + '0.png'))
+    all_frames_paths = list(frame_paths.union(frame_zero_paths))
     t0 = time.time()
-    results = check_gcs_files_existence(list(frame_paths))
+    results = check_gcs_files_existence(list(all_frames_paths))
     t1 = time.time()
     print(f"Checked existence of {len(frame_paths)} frames in {t1 - t0} seconds")
     res_df = pd.DataFrame(results, columns=['path', 'exists'])
