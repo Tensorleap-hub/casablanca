@@ -11,6 +11,24 @@ packages:
 
 max_utterances_pre_id: 10
 
+dataset_settings:
+  more_frames:
+    train_size: 14000
+    test_size: 6000
+    frames_indices:
+      - 60
+      - 80
+  base:
+    train_size: 7000
+    test_size: 3000
+    frames_indices:
+      - 80
+  more_vid:
+    train_size: 14000
+    test_size: 6000
+    frames_indices:
+      - 80
+
 frame_separator: frame
 dataset_creation:
   unique_ids: 20
@@ -19,7 +37,7 @@ dataset_creation:
   frames:
     initial: 0
     final: 80
-    step: 80
+    step: 40
   ids:
   - id00012
   - id00015
