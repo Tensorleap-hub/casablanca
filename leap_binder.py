@@ -1,7 +1,7 @@
 from casablanca.data.save_frames_to_gcs import save_frames_to_gcs
 from casablanca.utils.packages import install_all_packages
 
-# install_all_packages()
+install_all_packages()
 
 from typing import List, Dict
 import cv2
@@ -12,7 +12,7 @@ from code_loader import leap_binder
 from code_loader.contract.datasetclasses import PreprocessResponse
 from code_loader.contract.enums import LeapDataType, MetricDirection
 
-from casablanca.data.preprocess import load_data
+from casablanca.data.preprocess import load_data, load_data_all
 from casablanca.utils.loss import dummy_loss
 from casablanca.utils.metrics import lpip_alex_metric, lpip_vgg_metric, l1
 from casablanca.utils.visuelizers import image_change_last, grid_frames, grid_all
@@ -22,10 +22,15 @@ from casablanca.utils.general_utils import input_encoder
 
 # Preprocess Function
 def preprocess_func() -> List[PreprocessResponse]:
-    data = save_frames_to_gcs()
+    data = load_data_all()
+    dev = data[data['subset'] == 'dev']
+    test = data[data['subset'] == 'test']
 
-    train_df = data.sample(frac=CONFIG['train_ratio'], random_state=42)
-    val_df = data.drop(train_df.index)
+    train_df = save_frames_to_gcs(dev.head(CONFIG['dataset_settings']['more_frames']['train_size']))
+    val_df = save_frames_to_gcs(test.head(CONFIG['dataset_settings']['more_frames']['test_size']))
+
+    # train_df = data.sample(frac=CONFIG['train_ratio'], random_state=42)
+    # val_df = data.drop(train_df.index)
 
     train = PreprocessResponse(length=train_df.shape[0], data=train_df)
     val = PreprocessResponse(length=val_df.shape[0], data=val_df)
@@ -34,20 +39,28 @@ def preprocess_func() -> List[PreprocessResponse]:
 
 
 # ----------------inputs----------------------
-def input_encoder_source_image(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
-    path = preprocess.data['source_path'].iloc[idx]
-    frame_number = 0
-    return input_encoder(path, frame_number)
+# def input_encoder_source_image(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
+#     path = preprocess.data['path'].iloc[idx]
+#     frame_number = 0
+#     return input_encoder(path, frame_number)
+
+# def pick_a_place(idx):
+#     if CONFIG['type'] == 'more_frames':
+#         place = idx + (idx/2) + 1
+#     else:
+#         place = (idx*2) + 1
+#
+#     return place
 
 
 def input_encoder_current_frame(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
-    path = preprocess.data['vid_path'].iloc[idx]
+    path = preprocess.data['path'].iloc[idx]
     frame_number = preprocess.data['frame_id'].iloc[idx]
     return input_encoder(path, frame_number)
 
 
 def input_encoder_first_frame(idx: int, preprocess: PreprocessResponse) -> np.ndarray:
-    path = preprocess.data['vid_path'].iloc[idx]
+    path = preprocess.data['path'].iloc[idx]
     frame_number = 0
     return input_encoder(path, frame_number)
 
@@ -55,28 +68,24 @@ def input_encoder_first_frame(idx: int, preprocess: PreprocessResponse) -> np.nd
 # ----------------metadata----------------------
 
 def calc_metadata_vals(idx: int, preprocess: PreprocessResponse) -> dict:
-    res_dic = {}
-    res_dic["idx"] = idx
-    keys = ['source_id', 'vid_id', 'source_path', 'vid_path', 'vid_name', 'frame_id', 'source_gender', 'vid_gender']
+    res_dic = {"idx": idx}
+    keys = ['id', 'path', 'vid_name', 'vid_clip_name', 'frame_id', 'frame_path']
     for k in keys:
         res_dic[k] = preprocess.data[k].iloc[idx]
+    res_dic['number_id'] = int(res_dic['id'][2:])
+    res_dic['vid_clip_name'] = int(res_dic['vid_clip_name'])
     res_dic['frame_id'] = int(res_dic['frame_id'])
-    res_dic[
-        'vid_frame_combination_id'] = f"{preprocess.data['vid_name'].iloc[idx]}_{preprocess.data['frame_id'].iloc[idx]}"
-    res_dic[
-        'source_vid_combination_id'] = f"{preprocess.data['source_id'].iloc[idx]}_{preprocess.data['vid_name'].iloc[idx]}"
-    res_dic['same_id_source_vid'] = int(preprocess.data["source_id"].iloc[idx] == preprocess.data["vid_id"].iloc[idx])
     return res_dic
 
 
-def source_image_contrast(frame) -> float:
+def image_contrast(frame) -> float:
     img_lab = cv2.cvtColor(frame, cv2.COLOR_RGB2LAB)
     l, a, b = cv2.split(img_lab)
     df = abs(a - b)
     return float(np.mean(df))
 
 
-def source_image_hsv(frame) -> dict:
+def image_hsv(frame) -> dict:
     hsv_image = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
     hue_range = np.ptp(hsv_image[:, :, 0])
     saturation_level = np.mean(hsv_image[:, :, 1])
@@ -86,7 +95,7 @@ def source_image_hsv(frame) -> dict:
     return res
 
 
-def source_image_lab(frame) -> dict:
+def image_lab(frame) -> dict:
     lab_image = cv2.cvtColor(frame, cv2.COLOR_RGB2LAB)
     lightness_mean = np.mean(lab_image[:, :, 0])
     a_mean = np.mean(lab_image[:, :, 1])
@@ -95,11 +104,24 @@ def source_image_lab(frame) -> dict:
     return res
 
 
+def convert_to_grayscale(frame):
+    if len(frame.shape) == 3:
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    return frame
+
+
+def laplacian_var(frame) -> dict:
+    frame = convert_to_grayscale(frame)
+    laplacian_var = cv2.Laplacian(frame.astype(np.float64), cv2.CV_64F).var()
+    res = {'laplacian_var': float(np.round(laplacian_var, 3))}
+    return res
+
+
 def calc_metadata_stats_func(key: str):
     def calc_metadata_stats(idx: int, preprocess: PreprocessResponse) -> dict:
         res_dic = {}
         if key == "source_image":
-            frame = input_encoder_source_image(idx, preprocess)
+            frame = input_encoder_first_frame(idx, preprocess)
 
         elif key == 'current_frame':
             frame = input_encoder_current_frame(idx, preprocess)
@@ -112,12 +134,14 @@ def calc_metadata_stats_func(key: str):
         res_dic.update({"red_std": float(r.std()), "green_std": float(g.std()), "blue_std": float(b.std())})
         res_dic['brightness'] = float(np.mean(frame))
 
-        res = source_image_hsv(frame)
+        res = image_hsv(frame)
         res_dic.update(res)
-        res = source_image_lab(frame)
+        res = image_lab(frame)
+        res_dic.update(res)
+        res = laplacian_var(frame)
         res_dic.update(res)
 
-        res_dic['contrast'] = source_image_contrast(frame)
+        res_dic['contrast'] = image_contrast(frame)
         return res_dic
 
     return calc_metadata_stats
@@ -125,11 +149,11 @@ def calc_metadata_stats_func(key: str):
 
 leap_binder.set_preprocess(function=preprocess_func)
 
-leap_binder.set_input(function=input_encoder_source_image, name='source_image')
+leap_binder.set_input(function=input_encoder_first_frame, name='source_image')
 leap_binder.set_input(function=input_encoder_current_frame, name='current_frame')
 leap_binder.set_input(function=input_encoder_first_frame, name='first_frame')
 
-leap_binder.set_ground_truth(input_encoder_source_image, 'gt_source_image')
+leap_binder.set_ground_truth(input_encoder_current_frame, 'gt_current_frame')
 
 leap_binder.set_metadata(calc_metadata_vals, name='metadata')
 leap_binder.set_metadata(calc_metadata_stats_func('source_image'), name='source_image')

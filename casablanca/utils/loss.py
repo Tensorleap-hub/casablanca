@@ -17,27 +17,27 @@ def turn_to_pytorch_tensor(img):
     return ptensor.detach()
 
 
-def lpip_loss_alex(src_image, pred_image):
-    src_image = turn_to_pytorch_tensor(src_image)
+def lpip_loss_alex(current_frame, pred_image):
+    current_frame = turn_to_pytorch_tensor(current_frame)
     pred_image = turn_to_pytorch_tensor(pred_image)
-    src_image = src_image.permute(0, 3, 1, 2)
+    current_frame = current_frame.permute(0, 3, 1, 2)
     pred_image = pred_image.permute(0, 3, 1, 2)
     loss_fn_alex = lpips.LPIPS(net='alex')
-    result = loss_fn_alex(src_image, pred_image)
+    result = loss_fn_alex(current_frame, pred_image)
     return (result[0, 0, 0]).detach()
 
 
-def lpip_loss_vgg(src_image, pred_image):
-    src_image = turn_to_pytorch_tensor(src_image)
+def lpip_loss_vgg(current_frame, pred_image):
+    current_frame = turn_to_pytorch_tensor(current_frame)
     pred_image = turn_to_pytorch_tensor(pred_image)
-    src_image = src_image.permute(0, 3, 1, 2)
+    current_frame = current_frame.permute(0, 3, 1, 2)
     pred_image = pred_image.permute(0, 3, 1, 2)
     loss_fn_vgg = lpips.LPIPS(net='vgg')
-    result = loss_fn_vgg(src_image, pred_image)
+    result = loss_fn_vgg(current_frame, pred_image)
     return (result[0, 0, 0]).detach()
 
 
-def dummy_loss(src_image, pred_image):
-    src_image = turn_to_pytorch_tensor(src_image)
+def dummy_loss(current_frame, pred_image):
+    current_frame = turn_to_pytorch_tensor(current_frame)
     pred_image = turn_to_pytorch_tensor(pred_image)
     return torch.tensor([0])

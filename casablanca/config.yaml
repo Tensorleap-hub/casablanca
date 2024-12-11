@@ -1,7 +1,7 @@
 PROJECT_ID: casablanca-dev-project
 BUCKET_NAME: casablanca-datasets
 
-data_filepath: data/files_mapping.tsv
+data_filepath: data/files_mapping_all.tsv
 metadata_filepath: data/ids_metadata.json
 
 train_ratio: 0.7
@@ -11,15 +11,33 @@ packages:
 
 max_utterances_pre_id: 10
 
+dataset_settings:
+  more_frames:
+    train_size: 14000
+    test_size: 6000
+    frames_indices:
+      - 60
+      - 80
+  base:
+    train_size: 7000
+    test_size: 3000
+    frames_indices:
+      - 80
+  more_vid:
+    train_size: 14000
+    test_size: 6000
+    frames_indices:
+      - 80
+
 frame_separator: frame
 dataset_creation:
   unique_ids: 20
   n_videos_per_id: 5
   n_clips_per_video: 1
   frames:
-    initial: 10
-    final: 50
-    step: 10
+    initial: 0
+    final: 80
+    step: 40
   ids:
   - id00012
   - id00015
